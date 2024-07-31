@@ -1,12 +1,13 @@
 import 'dart:io';
 
-import 'package:app/model/note.dart';
-import 'package:app/store/persistent.dart';
-import 'package:app/sync/webdav.dart';
+// import 'package:app/sync/webdav.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:preferences/preference_service.dart';
-import 'package:app/data/samples.dart';
 import 'package:flutter/services.dart' show rootBundle;
+
+import '/model/note.dart';
+import '/store/persistent.dart';
+import '/data/samples.dart';
 
 class NotesStore {
   /* String subDirectoryNotes = ;
@@ -18,11 +19,11 @@ class NotesStore {
 
   bool get isDendronModeEnabled => PrefService.getBool('dendron_mode') ?? false;
 
-  Directory notesDir, attachmentsDir;
+  late Directory notesDir, attachmentsDir;
 
-  String searchText;
+  String? searchText;
 
-  String syncMethod;
+  late String syncMethod;
 
   get syncMethodName {
     switch (syncMethod) {
@@ -53,7 +54,7 @@ class NotesStore {
     }
   }
 
-  Directory applicationDocumentsDirectory;
+  late Directory applicationDocumentsDirectory;
 
   Future listNotes() async {
     applicationDocumentsDirectory = await getApplicationDocumentsDirectory();
@@ -61,7 +62,7 @@ class NotesStore {
 
     if (PrefService.getBool('notable_external_directory_enabled') ?? false) {
       directory =
-          Directory(PrefService.getString('notable_external_directory'));
+          Directory(PrefService.getString('notable_external_directory') ?? '');
     } else {
       directory = applicationDocumentsDirectory;
     }
@@ -109,7 +110,7 @@ class NotesStore {
           if (isDendronModeEnabled) {
             if (!entity.path.endsWith('.md')) continue;
           }
-          Note note = await PersistentStore.readNote(entity);
+          Note? note = await PersistentStore.readNote(entity);
 
           if (note != null) {
             if (PrefService.getBool('notes_list_virtual_tags') ?? false) {
@@ -126,7 +127,7 @@ class NotesStore {
 
             allNotes.add(note);
           }
-        } catch (e, st) {
+        } catch (e) {
           final note = Note();
           note.title =
               'ERROR - "$e" on parsing "${entity.path.split('/notes/').last}"';
@@ -137,7 +138,7 @@ class NotesStore {
           note.attachments = [];
 
           note.pinned = true;
-          note.favorited = true;
+          note.favorite = true;
           note.deleted = false;
 
           allNotes.add(note);
@@ -198,7 +199,7 @@ class NotesStore {
 
     if (searchText != null) {
       List keywords =
-          searchText.split(' ').map((s) => s.toLowerCase()).toList();
+          searchText!.split(' ').map((s) => s.toLowerCase()).toList();
 
       if (PrefService.getBool('search_content') ?? true) {
         List<String> toRemove = [];
@@ -265,9 +266,9 @@ class NotesStore {
     return count;
   }
 
-  List<Note> allNotes;
+  List<Note> allNotes = [];
 
-  List<Note> shownNotes;
+  List<Note> shownNotes = [];
 
   String currTag = '';
 
@@ -282,7 +283,7 @@ class NotesStore {
 
   List<String> rootTags = [];
 
-  Future<String> syncNow() async {
+  Future<String?> syncNow() async {
 /*     switch (syncMethod) {
       case 'webdav':
         return await WebdavSync().syncFiles(this);

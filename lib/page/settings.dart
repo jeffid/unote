@@ -3,14 +3,16 @@ import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:app/provider/theme.dart';
-import 'package:app/store/notes.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:preferences/preferences.dart';
-import 'package:preferences/radio_preference.dart';
+// import 'package:preferences/radio_preference.dart';
 import 'package:provider/provider.dart';
 
+import '/provider/theme.dart';
+import '/store/notes.dart';
+
+///
 class SettingsPage extends StatefulWidget {
   final NotesStore store;
   SettingsPage(this.store);
@@ -18,6 +20,7 @@ class SettingsPage extends StatefulWidget {
   _SettingsPageState createState() => _SettingsPageState();
 }
 
+///
 class _SettingsPageState extends State<SettingsPage> {
   NotesStore get store => widget.store;
   @override
@@ -41,6 +44,7 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
   }
 
+  ///
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,7 +97,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           onTap: () async {
-            Color color = await showDialog(
+            Color? color = await showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
                       title: Text('Select accent color'),
@@ -120,7 +124,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         width: MediaQuery.of(context).size.width * .7,
                       ),
                       actions: <Widget>[
-                        FlatButton(
+                        TextButton(
                           child: Text('Cancel'),
                           onPressed: () {
                             Navigator.of(context).pop();
@@ -144,7 +148,7 @@ class _SettingsPageState extends State<SettingsPage> {
             onChange: () async {
               if (PrefService.getString('notable_external_directory') == null) {
                 PrefService.setString('notable_external_directory',
-                    (await getExternalStorageDirectory()).path);
+                    (await getExternalStorageDirectory())!.path);
               }
 
               await store.listNotes();
@@ -171,7 +175,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
                 dir = Directory(dirStr);
 
-                if (dir != null) {
+                if (dir.existsSync()) {
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
@@ -285,13 +289,13 @@ class _SettingsPageState extends State<SettingsPage> {
                           title: Text(
                               'Do you want to recreate the tutorial notes and attachments?'),
                           actions: <Widget>[
-                            FlatButton(
+                            TextButton(
                               child: Text('Cancel'),
                               onPressed: () {
                                 Navigator.of(context).pop(false);
                               },
                             ),
-                            FlatButton(
+                            TextButton(
                               child: Text('Recreate'),
                               onPressed: () {
                                 Navigator.of(context).pop(true);
@@ -342,14 +346,15 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Future<String> _pickExternalDir() async {
+  ///
+  Future<String?> _pickExternalDir() async {
     if (!await Permission.storage.request().isGranted) {
       return null;
     }
 
     var dir = await FilePicker.platform.getDirectoryPath();
     if ((dir ?? '').isNotEmpty) {
-      if (await _checkIfDirectoryIsWritable(dir)) {
+      if (await _checkIfDirectoryIsWritable(dir!)) {
         return dir;
       }
     }
@@ -359,13 +364,14 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     var externalDir = await getExternalStorageDirectory();
-    if (await _checkIfDirectoryIsWritable(externalDir.path)) {
-      return externalDir.path;
+    if (await _checkIfDirectoryIsWritable(externalDir?.path)) {
+      return externalDir?.path;
     }
     return null;
   }
 
-  Future<bool> _checkIfDirectoryIsWritable(String path) async {
+  ///
+  Future<bool> _checkIfDirectoryIsWritable(String? path) async {
     final testFile = File('$path/${Random().nextInt(1000000)}');
 
     try {

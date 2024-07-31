@@ -25,7 +25,7 @@ The data directory is where all your notes and attachments will be stored, it ha
 
 - The data directory gives you freedom since your notes are never locked into some sort of proprietary database, all your files use sane formats and are easily accessible and portable.
 - You can also change the data directory at any time via `Settings -> Data Directory`, the current content won't be copied over to the new one.
-- You can edit your notes/attachments without even using Noteless, all changes you make to them will be reflected here (after a quick refresh). In fact you could also import a Markdown note simply by copying it into the `notes` directory.
+- You can edit your notes/attachments without even using iNote, all changes you make to them will be reflected here (after a quick refresh). In fact you could also import a Markdown note simply by copying it into the `notes` directory.
 
 ## Advanced Features
 

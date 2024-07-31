@@ -1,6 +1,6 @@
 class Samples {
   static List tutorialNotes = [
-    'Welcome to Noteless 🙋.md',
+    'Welcome to iNote 🙋.md',
     '01 - The Data Directory.md',
     '02 - The Sidebar.md',
     '03 - The Main Page.md',

@@ -1,26 +1,28 @@
 import 'dart:io';
 
+///
 class Note {
-  String title;
-  DateTime created;
-  DateTime modified;
+  String title = '';
+  late File file;
+  late DateTime created;
+  late DateTime modified;
   List<String> tags = [];
   List<String> attachments = [];
   bool pinned = false;
-  bool favorited = false;
+  bool favorite = false;
   bool deleted = false;
-  File file;
 
-  bool usesMillis = false;
-  bool usesUpdatedInsteadOfModified = false;
-  Map<String, dynamic> additionalFrontMatterKeys;
+  bool isMillisecond = false;
+  bool idUpdatedInsteadOfModified = false;
+  Map<String, dynamic> additionalFrontMatterKeys = {};
 
+  ///
   bool hasTag(String cTag) {
     if (cTag != '') {
       if (cTag == 'Trash') {
         return deleted;
       } else if (cTag == 'Favorites') {
-        return favorited;
+        return favorite;
       } else if (cTag == 'Untagged') {
         return tags.isEmpty;
       } else {

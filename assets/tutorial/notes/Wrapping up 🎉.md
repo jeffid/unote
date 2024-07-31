@@ -13,8 +13,8 @@ The next step is deleting all these tutorial notes, you can do this one-by-one, 
 
 ## Feedback
 
-If you've reached this far chances are you're considering using Noteless as your main mobile note-taking app, that's great!
+If you've reached this far chances are you're considering using iNote as your main mobile note-taking app, that's great!
 
-Feel free to [contact us](https://github.com/redsolver/noteless/issues) about any issues you may encounter, any features suggestions and generally sharing your opinion about Noteless and how we can improve it.
+Feel free to [contact us](https://github.com/inote-flutter/inote/issues) about any issues you may encounter, any features suggestions and generally sharing your opinion about iNote and how we can improve it.
 
 Have a wonderful day! :wave:

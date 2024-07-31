@@ -13,7 +13,7 @@ Notes are written in [GitHub-flavored Markdown](https://guides.github.com/featur
 
 This also means that your notes aren't locked into any proprietary format.
 
-Notes can have some metadata: if they are favorited or not, which tags they have, which attachments they have, etc. These metadata are written as Markdown front matter. This is taken care of for you.
+Notes can have some metadata: if they are favorite or not, which tags they have, which attachments they have, etc. These metadata are written as Markdown front matter. This is taken care of for you.
 
 ## Syntax Plugins
 

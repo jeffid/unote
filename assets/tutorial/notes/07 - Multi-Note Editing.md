@@ -29,4 +29,4 @@ If you need more advanced multi-note editing, like global search & replace, reme
 
 You could open your data directory into your favorite editor of choice and perform the search & replace there, this way you can also use advanced features like regexes.
 
-All the edits performed with a third-party application will be reflected into Noteless after a quick refresh.
+All the edits performed with a third-party application will be reflected into iNote after a quick refresh.

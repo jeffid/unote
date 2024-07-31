@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import 'package:app/utils/yaml.dart';
 import 'package:preferences/preference_service.dart';
 import 'package:front_matter/front_matter.dart' as fm;
 
-import 'package:app/model/note.dart';
+import '/utils/yaml.dart';
+import '/model/note.dart';
 
 const supportedFrontMatterKeys = [
   'title',
@@ -13,28 +13,29 @@ const supportedFrontMatterKeys = [
   'tags',
   'attachments',
   'pinned',
-  'favorited',
+  'favorite',
   'deleted',
   'updated',
 ];
 
+///
 class PersistentStore {
   static bool get isDendronModeEnabled =>
       (PrefService.getBool('dendron_mode') ?? false);
 
-  static Future<String> readContent(
-    Note note,
-  ) async {
+  ///
+  static Future<String?> readContent(Note note) async {
     if (!note.file.existsSync()) return null;
 
     String fileContent = await note.file.readAsString();
 
-    var content;
+    // var content;
+    String content = '';
 
     if (fileContent.trimLeft().startsWith('---')) {
       var doc = fm.parse(fileContent);
       if (doc.content != null) {
-        content = doc.content.trimLeft();
+        content = doc.content!.trimLeft();
       } else {
         content = fileContent.trimLeft();
       }
@@ -51,15 +52,16 @@ class PersistentStore {
     return content;
   }
 
-  static Future saveNote(Note note, [String content]) async {
+  ///
+  static Future saveNote(Note note, [String? content]) async {
     // print('PersistentStore.saveNote');
 
     if (content == null) {
       content = await readContent(note);
     }
     if (isDendronModeEnabled) {
-      final index = content.indexOf('\n');
-      if (index != -1) content = content.substring(index).trimLeft();
+      final index = content?.indexOf('\n');
+      if (index != -1) content = content?.substring(index!).trimLeft();
     }
 
     String header = '---\n';
@@ -77,21 +79,21 @@ class PersistentStore {
 
     if (note.attachments.isNotEmpty) data['attachments'] = note.attachments;
 
-    if (note.usesMillis ?? false) {
+    if (note.isMillisecond) {
       data['created'] = note.created.millisecondsSinceEpoch;
-      data[note.usesUpdatedInsteadOfModified ? 'updated' : 'modified'] =
+      data[note.idUpdatedInsteadOfModified ? 'updated' : 'modified'] =
           note.modified.millisecondsSinceEpoch;
     } else {
       data['created'] = note.created.toIso8601String();
-      data[note.usesUpdatedInsteadOfModified ? 'updated' : 'modified'] =
+      data[note.idUpdatedInsteadOfModified ? 'updated' : 'modified'] =
           note.modified.toIso8601String();
     }
 
     if (note.pinned) data['pinned'] = true;
-    if (note.favorited) data['favorited'] = true;
+    if (note.favorite) data['favorite'] = true;
     if (note.deleted) data['deleted'] = true;
 
-    if (note.additionalFrontMatterKeys != null) {
+    if (note.additionalFrontMatterKeys.isNotEmpty) {
       data.addAll(note.additionalFrontMatterKeys.cast<String, dynamic>());
     }
 
@@ -103,11 +105,12 @@ class PersistentStore {
 
     // print(header);
 
-    note.file.writeAsStringSync(header + content);
+    note.file.writeAsStringSync(header + content!);
     /*  print(header + content); */
   }
 
-  static Future<Note> readNote(File file) async {
+  ///
+  static Future<Note?> readNote(File file) async {
     // print('PersistentStore.readNote');
 
     if (!file.existsSync()) return null;
@@ -137,9 +140,9 @@ class PersistentStore {
 
     note.file = file;
 
-    note.title = header['title'].toString();
-
-    if (note.title == null) {
+    if (header['title'] != null) {
+      note.title = header['title'].toString();
+    } else {
       var title = file.path.split('/').last;
       if (title.endsWith('.md')) {
         title = title.substring(0, title.length - 3);
@@ -147,34 +150,35 @@ class PersistentStore {
       note.title = title;
     }
 
+// note modified time
     if (header['modified'] != null && !isDendronModeEnabled) {
       if (header['modified'] is int) {
-        note.usesMillis = true;
+        note.isMillisecond = true;
         note.modified = DateTime.fromMillisecondsSinceEpoch(header['modified']);
       } else {
-        note.modified = DateTime.tryParse(header['modified']);
+        note.modified = DateTime.tryParse(header['modified'])!;
       }
     } else if (header['updated'] != null) {
-      note.usesUpdatedInsteadOfModified = true;
+      note.idUpdatedInsteadOfModified = true;
       if (header['updated'] is int) {
-        note.usesMillis = true;
+        note.isMillisecond = true;
         note.modified = DateTime.fromMillisecondsSinceEpoch(header['updated']);
       } else {
-        note.modified = DateTime.tryParse(header['updated']);
+        note.modified = DateTime.tryParse(header['updated'])!;
       }
     } else {
       note.modified = file.lastModifiedSync();
     }
 
+// note created time
     if (header['created'] != null) {
       if (header['created'] is int) {
-        note.usesMillis = true;
+        note.isMillisecond = true;
         note.created = DateTime.fromMillisecondsSinceEpoch(header['created']);
       } else {
-        note.created = DateTime.tryParse(header['created']);
+        note.created = DateTime.tryParse(header['created'])!;
       }
-    }
-    if (note.created == null) {
+    } else {
       note.created = note.modified;
     }
 
@@ -185,7 +189,7 @@ class PersistentStore {
     note.attachments = List.from((header['attachments'] ?? []).cast<String>());
 
     note.pinned = header['pinned'] ?? false;
-    note.favorited = header['favorited'] ?? false;
+    note.favorite = header['favorite'] ?? false;
     note.deleted = header['deleted'] ?? false;
 
     if (header.isNotEmpty) {
@@ -196,6 +200,11 @@ class PersistentStore {
     }
 
     return note;
+  }
+
+  ///
+  static Future deleteNote(Note note) async {
+    await note.file.delete();
   }
 
 /*   static Future<Note> readNoteMetadata(File file) async {
@@ -259,13 +268,9 @@ class PersistentStore {
     note.attachments = List.from((header['attachments'] ?? []).cast<String>());
 
     note.pinned = header['pinned'] ?? false;
-    note.favorited = header['favorited'] ?? false;
+    note.favorite = header['favorite'] ?? false;
     note.deleted = header['deleted'] ?? false;
 
     return note;
   } */
-
-  static Future deleteNote(Note note) async {
-    await note.file.delete();
-  }
 }

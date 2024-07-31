@@ -29,7 +29,7 @@ By default this is by `Title - Ascending`, so that the tutorial notes get displa
 
 Lastly there's the notes list.
 
-Notes will have some badges if they are pinned, favorited or have attachments.
+Notes will have some badges if they are pinned, favorite or have attachments.
 
 Pinned notes are displayed before the others.
 

@@ -1,23 +1,24 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:app/model/note.dart';
-import 'package:app/page/edit.dart';
-import 'package:app/page/note_list.dart';
-import 'package:app/provider/theme.dart';
-import 'package:app/store/notes.dart';
-import 'package:app/store/persistent.dart';
-import 'package:markd/markdown.dart';
 import 'package:preferences/preference_service.dart';
-
 import 'package:provider/provider.dart';
 import 'package:rich_code_editor/rich_code_controller.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:path_provider/path_provider.dart';
+// import 'package:path_provider/path_provider.dart';
+import 'package:markd/markdown.dart';
 import 'package:markd/markdown.dart' as markd;
-
 import 'package:markd/src/ast.dart' as markd_ast;
+import 'package:webview_all/webview_all.dart' as webview_all;
+
+import '/main.dart';
+import '/model/note.dart';
+import '/page/edit.dart';
+import '/page/note_list.dart';
+import '/provider/theme.dart';
+import '/store/notes.dart';
+import '/store/persistent.dart';
 
 class PreviewPage extends StatefulWidget {
   final NotesStore store;
@@ -35,7 +36,7 @@ class PreviewPage extends StatefulWidget {
 class _PreviewPageState extends State<PreviewPage> {
   // BuildContext context;
 
-  String currentTextContent;
+  late String currentTextContent;
 
   @override
   void initState() {
@@ -45,7 +46,7 @@ class _PreviewPageState extends State<PreviewPage> {
 
   List<int> checkboxPositions = [];
 
-  File previewFile;
+  late File previewFile;
 
   _processContent() async {
     //this.context = context;
@@ -100,13 +101,17 @@ class _PreviewPageState extends State<PreviewPage> {
         .padLeft(8, '0')
         .substring(2);
 
-    String textColor = theme.textTheme.body1.color.value
+    String? textColor = theme.textTheme.bodyLarge == null
+        ? 'ffffff'
+        : theme.textTheme.bodyLarge?.color?.value
+            .toRadixString(16)
+            .padLeft(8, '0')
+            .substring(2);
+
+    String accentColor = theme.colorScheme.secondary.value
         .toRadixString(16)
         .padLeft(8, '0')
         .substring(2);
-
-    String accentColor =
-        theme.accentColor.value.toRadixString(16).padLeft(8, '0').substring(2);
 
     String generatedPreview = '''
 <!DOCTYPE html>
@@ -234,18 +239,10 @@ blockquote{
 
 /*     generatedPreview = generatedPreview.replaceAll('\\ ', ' '); */
     generatedPreview = generatedPreview
-        .replaceAll(
-            'src="@attachment/',
-            'src="' +
-                'file://' +
-                PrefService.getString('notable_attachments_directory') +
-                '/')
-        .replaceAll(
-            'src="/',
-            'src="' +
-                'file://' +
-                PrefService.getString('notable_notes_directory') +
-                '/');
+        .replaceAll('src="@attachment/',
+            'src="file://${PrefService.getString('notable_attachments_directory') ?? ''}/')
+        .replaceAll('src="/',
+            'src="file://${PrefService.getString('notable_notes_directory') ?? ''}/');
 
     generatedPreview =
         generatedPreview.replaceAll('<img ', '<img width="100%" ');
@@ -258,7 +255,7 @@ blockquote{
         'disabled="disabled" class="todo" type="checkbox"', (match) {
       checkboxIndex++;
 
-      return 'class="todo" type="checkbox" onclick="notelesscheckbox.postMessage( this.checked + \'-$checkboxIndex\');"';
+      return 'class="todo" type="checkbox" onclick="notecheckbox.postMessage( this.checked + \'-$checkboxIndex\');"';
     });
 
     await previewFile.writeAsString(generatedPreview);
@@ -276,6 +273,86 @@ blockquote{
   Widget build(BuildContext context) {
     // print('BUILD');
 
+    String previewUrl = 'file://${previewFile.path}';
+
+    logger.d(previewUrl);
+
+    // @doc https://pub.dev/documentation/webview_flutter/4.8.0/
+    // @doc https://pub.dev/packages/webview_all
+    Widget webview = appInfo.platform.isMobile
+        ? WebViewWidget(
+            controller: WebViewController()
+              ..setJavaScriptMode(JavaScriptMode.unrestricted)
+              // ..setBackgroundColor(const Color(0x00000000))
+              ..setNavigationDelegate(
+                NavigationDelegate(
+                  onProgress: (int progress) {
+                    // Update loading bar.
+                  },
+                  onPageStarted: (String url) {},
+                  onPageFinished: (String url) {},
+                  onWebResourceError: (WebResourceError error) {},
+                  onNavigationRequest: _navigationDelegate,
+                ),
+              )
+              ..addJavaScriptChannel('flutternotable',
+                  onMessageReceived: (_) async {
+                setState(() {
+                  _pageLoaded = true;
+                });
+              })
+              ..addJavaScriptChannel('notecheckbox',
+                  onMessageReceived: (msg) async {
+                final parts = msg.message.split('-');
+                final bool checked = parts[0] == 'true';
+                final int id = int.parse(parts[1]);
+                final index = checkboxPositions[id];
+
+                currentTextContent = currentTextContent.substring(0, index) +
+                    (checked ? 'x' : ' ') +
+                    currentTextContent.substring(index + 1);
+
+                widget.richCtrl.text = currentTextContent;
+                // textContent
+              })
+              ..loadRequest(Uri.parse(previewUrl)))
+        : webview_all.Webview(url: previewUrl);
+
+    // Widget webview2 = WebView(
+    //   initialUrl: 'file://' + previewFile.path,
+    //   javascriptMode: JavascriptMode.unrestricted,
+    //   onWebViewCreated: (ctrl) {},
+    //   javascriptChannels: {
+    //     JavascriptChannel(
+    //         name: 'flutternotable',
+    //         onMessageReceived: (_) async {
+    //           setState(() {
+    //             _pageLoaded = true;
+    //           });
+    //         }),
+    //     JavascriptChannel(
+    //         name: 'notecheckbox',
+    //         onMessageReceived: (msg) async {
+    //           final parts = msg.message.split('-');
+
+    //           final bool checked = parts[0] == 'true';
+
+    //           final int id = int.parse(parts[1]);
+
+    //           final index = checkboxPositions[id];
+
+    //           currentTextContent = currentTextContent.substring(0, index) +
+    //               (checked ? 'x' : ' ') +
+    //               currentTextContent.substring(index + 1);
+
+    //           widget.richCtrl.text = currentTextContent;
+
+    //           // textContent
+    //         }),
+    //   },
+    //   navigationDelegate: _navigationDelegate,
+    // );
+
     return StatefulBuilder(
       builder: (context, setState) {
         return !_processingDone
@@ -284,76 +361,7 @@ blockquote{
               )
             : Stack(
                 children: <Widget>[
-                  WebView(
-                    initialUrl: 'file://' + previewFile.path,
-                    javascriptMode: JavascriptMode.unrestricted,
-                    onWebViewCreated: (ctrl) {},
-                    javascriptChannels: {
-                      JavascriptChannel(
-                          name: 'flutternotable',
-                          onMessageReceived: (_) async {
-                            setState(() {
-                              _pageLoaded = true;
-                            });
-                          }),
-                      JavascriptChannel(
-                          name: 'notelesscheckbox',
-                          onMessageReceived: (msg) async {
-                            final parts = msg.message.split('-');
-
-                            final bool checked = parts[0] == 'true';
-
-                            final int id = int.parse(parts[1]);
-
-                            final index = checkboxPositions[id];
-
-                            currentTextContent =
-                                currentTextContent.substring(0, index) +
-                                    (checked ? 'x' : ' ') +
-                                    currentTextContent.substring(index + 1);
-
-                            widget.richCtrl.text = currentTextContent;
-
-                            // textContent
-                          }),
-                    },
-                    navigationDelegate: (request) {
-                      print(request.url);
-
-                      if (request.url.startsWith('file://')) {
-                        String link = Uri.decodeFull(
-                            RegExp(r'@.*').stringMatch(request.url));
-                        print(link);
-
-                        String type =
-                            RegExp(r'(?<=@).*(?=/)').stringMatch(link);
-
-                        String data = RegExp(r'(?<=/).*').stringMatch(link);
-                        print(type);
-                        print(data);
-                        print(Theme.of(context).brightness);
-                        switch (type) {
-                          case 'note':
-                            _navigateToNote(data);
-
-                            break;
-                          case 'tag':
-                            _navigateToTag(data);
-                            break;
-                          case 'search':
-                            _navigateToSearch(data);
-                            break;
-                          case 'attachment':
-                            break;
-                        }
-                      } else {
-                        launch(
-                          request.url,
-                        );
-                      }
-                      return NavigationDecision.prevent;
-                    },
-                  ),
+                  webview,
                   if (!_pageLoaded)
                     Container(
                       color: Theme.of(context).scaffoldBackgroundColor,
@@ -366,9 +374,48 @@ blockquote{
     );
   }
 
+  ///
+  NavigationDecision _navigationDelegate(NavigationRequest request) {
+    // print(request.url);
+    logger.d(request.url);
+
+    if (request.url.startsWith('file://')) {
+      String link =
+          Uri.decodeFull(RegExp(r'@.*').stringMatch(request.url) ?? '');
+      print(link);
+
+      String type = RegExp(r'(?<=@).*(?=/)').stringMatch(link) ?? '';
+
+      String data = RegExp(r'(?<=/).*').stringMatch(link) ?? '';
+      print(type);
+      print(data);
+      print(Theme.of(context).brightness);
+      switch (type) {
+        case 'note':
+          _navigateToNote(data);
+
+          break;
+        case 'tag':
+          _navigateToTag(data);
+          break;
+        case 'search':
+          _navigateToSearch(data);
+          break;
+        case 'attachment':
+          break;
+      }
+    } else {
+      // launch(
+      //   request.url,
+      // );
+      launchUrl(Uri.parse(request.url));
+    }
+    return NavigationDecision.prevent;
+  }
+
   void _navigateToNote(String title) async {
     if (!title.endsWith('.md')) title += '.md';
-    Note newNote = await PersistentStore.readNote(
+    Note? newNote = await PersistentStore.readNote(
         File('${PrefService.getString('notable_notes_directory')}/${title}'));
     if (newNote == null) {
       // TODO Show Error
@@ -383,6 +430,7 @@ blockquote{
         builder: (context) => NoteListPage(
               filterTag: tag,
               isFirstPage: false,
+              searchText: '',
             )));
   }
 
@@ -391,6 +439,7 @@ blockquote{
         builder: (context) => NoteListPage(
               searchText: search,
               isFirstPage: false,
+              filterTag: '',
             )));
   }
 }

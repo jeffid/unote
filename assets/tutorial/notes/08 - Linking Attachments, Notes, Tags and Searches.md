@@ -8,7 +8,7 @@ modified: '2020-07-05T12:00:00.000Z'
 
 # 08 - Linking Attachments, Notes, Tags and Searches
 
-Sometimes, like when writing a tutorial for a note-taking app :wink:, you may need to link to other notes or embed a few attachments. Noteless makes this easy for you.
+Sometimes, like when writing a tutorial for a note-taking app :wink:, you may need to link to other notes or embed a few attachments. iNote makes this easy for you.
 
 ## Attachments
 

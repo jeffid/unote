@@ -1,12 +1,12 @@
-import 'dart:ui';
+// import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:rich_code_editor/exports.dart';
 
-class NotelessSyntaxHighlighter implements SyntaxHighlighterBase {
-  Color accentColor;
+class NoteSyntaxHighlighter implements SyntaxHighlighterBase {
+  Color? accentColor;
 
-  Map styles;
+  late Map styles;
 
   init(Color accentColor) {
     this.accentColor = accentColor;
@@ -35,17 +35,19 @@ class NotelessSyntaxHighlighter implements SyntaxHighlighterBase {
     };
   }
 
-  NotelessSyntaxHighlighter({this.accentColor});
+  NoteSyntaxHighlighter({this.accentColor});
 
   @override
   TextEditingValue addTextRemotely(TextEditingValue oldValue, String newText) {
-    return null;
+    // return null;
+    return oldValue;
   }
 
   @override
   TextEditingValue onBackSpacePress(
       TextEditingValue oldValue, TextSpan currentSpan) {
-    return null;
+    // return null;
+    return oldValue;
   }
 
   @override
@@ -112,54 +114,57 @@ class NotelessSyntaxHighlighter implements SyntaxHighlighterBase {
       return newValue;
     }
 
-    return null;
-
-    int start = oldStart;
-
-    int breakCount = 0;
-
-    while (start > 0) {
-      start--;
-      if (oldValue.text[start] == '\n') {
-        if (breakCount >= 1) break;
-        breakCount++;
-      }
-    }
-    if (start != 0) start++;
-
-    String startOfLine = oldValue.text.substring(
-      start,
-    );
-    final before = oldValue.text.substring(0, oldStart);
-
-    print(startOfLine.substring(0, 10));
-
-    if (startOfLine.startsWith('- ')) {
-      int length = 1;
-
-      if (startOfLine.startsWith('- ')) length++;
-/*       _rec.text = before + startOfLine.substring(1).trimLeft();
-      _rec.selection = TextSelection(
-          baseOffset: oldStart - length, extentOffset: oldStart - length); */
-      var newValue = oldValue.copyWith(
-        text: before + '- \n' + oldValue.text,
-        composing: TextRange(start: -1, end: -1),
-        selection: TextSelection.fromPosition(
-          TextPosition(
-              affinity: TextAffinity.upstream, offset: before.length + 2),
-        ),
-      );
-
-      return newValue;
-    } else {}
+    // return null;
     return oldValue;
+
+//     int start = oldStart;
+
+//     int breakCount = 0;
+
+//     while (start > 0) {
+//       start--;
+//       if (oldValue.text[start] == '\n') {
+//         if (breakCount >= 1) break;
+//         breakCount++;
+//       }
+//     }
+//     if (start != 0) start++;
+
+//     String startOfLine = oldValue.text.substring(
+//       start,
+//     );
+//     final before = oldValue.text.substring(0, oldStart);
+
+//     print(startOfLine.substring(0, 10));
+
+//     if (startOfLine.startsWith('- ')) {
+//       int length = 1;
+
+//       if (startOfLine.startsWith('- ')) length++;
+// /*       _rec.text = before + startOfLine.substring(1).trimLeft();
+//       _rec.selection = TextSelection(
+//           baseOffset: oldStart - length, extentOffset: oldStart - length); */
+//       var newValue = oldValue.copyWith(
+//         text: before + '- \n' + oldValue.text,
+//         composing: TextRange(start: -1, end: -1),
+//         selection: TextSelection.fromPosition(
+//           TextPosition(
+//               affinity: TextAffinity.upstream, offset: before.length + 2),
+//         ),
+//       );
+
+//       return newValue;
+//     } else {}
+//     return oldValue;
   }
 
+  ///
   @override
   List<TextSpan> parseText(TextEditingValue tev) {
     var texts = tev.text.split('\n');
 
-    var lsSpans = List<TextSpan>();
+    // var lsSpans = List<TextSpan>();
+    var lsSpans = <TextSpan>[];
 
     bool inCodeBlock = false;
 
@@ -200,7 +205,7 @@ class NotelessSyntaxHighlighter implements SyntaxHighlighterBase {
         lineStart += ' ';
       }
 
-      if (lineStart != null)
+      if (lineStart.isNotEmpty)
         lsSpans.add(
           TextSpan(
             text: lineStart,
@@ -404,7 +409,7 @@ class NotelessSyntaxHighlighter implements SyntaxHighlighterBase {
       s = '0$s';
 
       for (var part in s.split('<nless-format-tmp>')) {
-        TextStyle style = styles[part[0]];
+        TextStyle? style = styles[part[0]];
 
         lsSpans.add(TextSpan(
           text: part.substring(1),
@@ -416,7 +421,6 @@ class NotelessSyntaxHighlighter implements SyntaxHighlighterBase {
           str = '';
         } */
       }
-
 
       if (i < texts.length) {
         lsSpans.add(TextSpan(text: '\n'));

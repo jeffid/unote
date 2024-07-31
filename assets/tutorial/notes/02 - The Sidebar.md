@@ -15,7 +15,7 @@ It can be opened by clicking the hamburger icon in the top left corner or by swi
 ## Categories
 
 - **All Notes**: This section contains all notes.
-- **Favorites**: This section contains all notes you've favorited.
+- **Favorites**: This section contains all notes you've favorite.
 - **Untagged**: This section contains all notes that have no tags.
 - **Trash**: This section contains all notes that have been deleted. These notes won't be displayed in any other category.
 - **All your other tags**
