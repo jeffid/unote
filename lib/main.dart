@@ -1,16 +1,15 @@
 // @dart=3.4
 
-// import 'package:device_info/device_info.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
 import 'package:preferences/preference_service.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_app_info/flutter_app_info.dart';
 
-import '/provider/theme.dart';
 import '/constants/app_constants.dart';
 import '/page/note_list.dart';
+import '/provider/theme.dart';
+// import '/utils/logger.dart';
 
 bool isPreviewFeatureEnabled = true;
 
@@ -18,7 +17,6 @@ late AppInfoData appInfo;
 
 late ThemeData themeData;
 
-final logger = Logger();
 
 ///
 main() async {
@@ -30,10 +28,6 @@ main() async {
   Intl.defaultLocale = 'en_US';
 
   runApp(
-    // ChangeNotifierProvider<ThemeNotifier>(
-    //   create: (_) => ThemeNotifier(),
-    //   child: App(),
-    // ),
     AppInfo(
       data: await AppInfoData.get(),
       child: ChangeNotifierProvider<ThemeNotifier>(
@@ -49,11 +43,11 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     appInfo = AppInfo.of(context);
-    themeData = Provider.of<ThemeNotifier>(context).currentThemeData;
+    themeData = Provider.of<ThemeNotifier>(context).themeData;
 
     return MaterialApp(
       title: appName,
-      theme: Provider.of<ThemeNotifier>(context).currentThemeData,
+      theme: themeData,
       home: NoteListPage(
         isFirstPage: true,
         filterTag: '',

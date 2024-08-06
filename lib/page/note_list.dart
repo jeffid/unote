@@ -2,22 +2,23 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:preferences/preferences.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:uuid/uuid.dart';
 // import 'package:quick_actions/quick_actions.dart';
 // import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:uuid/uuid.dart';
 
-import '/main.dart';
 import '/constants/app_constants.dart';
+import '/main.dart';
 import '/model/note.dart';
-import '/page/edit.dart';
-import '/page/settings.dart';
+import '/store/encryption.dart';
 import '/store/notes.dart';
 import '/store/persistent.dart';
+import '/utils/logger.dart';
 import './about.dart';
+import './edit.dart';
+import './settings.dart';
 
 ///
 class NoteListPage extends StatefulWidget {
@@ -58,7 +59,7 @@ class _NoteListPageState extends State<NoteListPage> {
 
   @override
   void initState() {
-    store.currTag = widget.filterTag.isNotEmpty
+    store.currentTag = widget.filterTag.isNotEmpty
         ? widget.filterTag
         : PrefService.getString('current_tag') ?? '';
 
@@ -119,7 +120,7 @@ class _NoteListPageState extends State<NoteListPage> {
   ///
   @override
   Widget build(BuildContext context) {
-    Logger().d('note_list build ===================');
+    logger.d('note_list build ===================');
 
     return PopScope(
       canPop: false,
@@ -178,7 +179,7 @@ class _NoteListPageState extends State<NoteListPage> {
 
   ///
   PreferredSizeWidget _appBar() {
-    Color searchFieldColor = Theme.of(context).colorScheme.onSecondary;
+    Color fgColor = themeData.colorScheme.onSecondary;
 
     return AppBar(
       title: Padding(
@@ -188,17 +189,17 @@ class _NoteListPageState extends State<NoteListPage> {
                 decoration: InputDecoration(
                   isDense: true,
                   labelText: 'Search',
-                  labelStyle: TextStyle(color: searchFieldColor),
+                  labelStyle: TextStyle(color: fgColor),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: searchFieldColor),
+                    borderSide: BorderSide(color: fgColor),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: searchFieldColor),
+                    borderSide: BorderSide(color: fgColor),
                   ),
                 ),
-                style: TextStyle(color: searchFieldColor),
+                style: TextStyle(color: fgColor),
                 autofocus: true,
-                cursorColor: searchFieldColor,
+                cursorColor: fgColor,
                 controller: _searchFieldCtrl,
                 onChanged: (text) {
                   store.searchText = _searchFieldCtrl.text;
@@ -409,15 +410,20 @@ class _NoteListPageState extends State<NoteListPage> {
         selectedColor: Theme.of(context).colorScheme.primary,
         title: Text(note.title),
         // textColor: Theme.of(context).textTheme.bodySmall?.color,
-        subtitle: store.isDendronModeEnabled
+        subtitle: store.isDendronMode
             ? Text(note.file.path.substring(store.notesDir.path.length + 1))
             : null,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            if (note.attachments.isNotEmpty) Icon(MdiIcons.paperclip),
-            if (note.favorite) Icon(MdiIcons.star),
             if (note.pinned) Icon(MdiIcons.pin),
+            if (note.favorite) Icon(MdiIcons.star),
+            if (note.encrypted)note.isDecryptSuccess?
+              Icon(MdiIcons.lockOpen):Icon(MdiIcons.lock),
+            // if (note.encrypted && note.isDecryptSuccess)
+            //   Icon(MdiIcons.lockOpen),
+            // if (note.encrypted && !note.isDecryptSuccess) Icon(MdiIcons.lock),
+            if (note.attachments.isNotEmpty) Icon(MdiIcons.paperclip),
             if (note.tags.contains('color/red'))
               Container(
                 color: Colors.red,
@@ -450,6 +456,52 @@ class _NoteListPageState extends State<NoteListPage> {
               }
             });
             return;
+          }
+
+          //  password is required for encrypted documents
+          if (note.encrypted && !note.isDecryptSuccess) {
+            TextEditingController ctrl = TextEditingController();
+            final (cd, canRetry) = note.canRetry(false);
+
+            String pwd = await showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text('Enter password'),
+                    content: TextField(
+                      controller: ctrl,
+                      autofocus: true,
+                      readOnly: !canRetry,
+                      decoration: InputDecoration(
+                        hintText: canRetry
+                            ? 'Enter password'
+                            : 'Please try again in ${cd} second(s)',
+                      ),
+                      onSubmitted: (str) {
+                        Navigator.of(context).pop(str);
+                      },
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text('Cancel'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: Text('Confirm'),
+                        onPressed: canRetry
+                            ? () => Navigator.of(context).pop(ctrl.text)
+                            : null,
+                      ),
+                    ],
+                  ),
+                ) ??
+                '';
+            if (pwd.isNotEmpty) {
+              note.encryption = Encryption(key: pwd);
+            } else {
+              return;
+            }
           }
 
           await Navigator.of(context).push(
@@ -802,8 +854,7 @@ class _NoteListPageState extends State<NoteListPage> {
               //     return Text('${info?.appName} ${info?.version}');
               //   },
               // ),
-              title:
-                  Text('${appName} ${appInfo.package.version}'),
+              title: Text('${appName} ${appInfo.package.version}'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -1086,10 +1137,10 @@ class _NoteListPageState extends State<NoteListPage> {
       i++;
     }
 
-    if (store.isDendronModeEnabled) {
+    if (store.isDendronMode) {
       newNote.isMillisecond = true;
       newNote.idUpdatedInsteadOfModified = true;
-      newNote.additionalFrontMatterKeys = {
+      newNote.header = {
         'id': Uuid().v4(),
         'desc': '',
       };

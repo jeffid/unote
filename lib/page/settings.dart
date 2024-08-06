@@ -3,12 +3,14 @@ import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:preferences/preferences.dart';
 // import 'package:preferences/radio_preference.dart';
 import 'package:provider/provider.dart';
 
+import '/main.dart';
 import '/provider/theme.dart';
 import '/store/notes.dart';
 
@@ -47,11 +49,14 @@ class _SettingsPageState extends State<SettingsPage> {
   ///
   @override
   Widget build(BuildContext context) {
+    Color accentColor = themeData.colorScheme.secondary;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Settings'),
       ),
       body: ListView(children: <Widget>[
+        /// Theme
         PreferenceTitle('Theme'),
         RadioPreference(
           'Light',
@@ -62,6 +67,8 @@ class _SettingsPageState extends State<SettingsPage> {
             Provider.of<ThemeNotifier>(context, listen: false)
                 .updateTheme('light');
           },
+          activeColor: accentColor,
+          inactiveColor: accentColor,
         ),
         RadioPreference(
           'Dark',
@@ -71,6 +78,8 @@ class _SettingsPageState extends State<SettingsPage> {
             Provider.of<ThemeNotifier>(context, listen: false)
                 .updateTheme('dark');
           },
+          activeColor: accentColor,
+          inactiveColor: accentColor,
         ),
         RadioPreference(
           'Black / AMOLED',
@@ -80,6 +89,8 @@ class _SettingsPageState extends State<SettingsPage> {
             Provider.of<ThemeNotifier>(context, listen: false)
                 .updateTheme('black');
           },
+          activeColor: accentColor,
+          inactiveColor: accentColor,
         ),
         ListTile(
           title: Text('Accent Color'),
@@ -87,8 +98,10 @@ class _SettingsPageState extends State<SettingsPage> {
             padding: const EdgeInsets.only(right: 9, left: 9),
             child: Container(
               decoration: BoxDecoration(
-                border: Border.all(),
-                color: Color(PrefService.getInt('theme_color') ?? 0xff21d885),
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(3.0),
+                color: Color(PrefService.getInt('theme_color') ??
+                    ThemeNotifier.defaultThemeColor.value),
               ),
               child: SizedBox(
                 width: 28,
@@ -106,7 +119,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           crossAxisCount: 5,
                           children: [
                             for (Color color in [
-                              Color(0xff21d885),
+                              ThemeNotifier.defaultThemeColor,
                               ...Colors.primaries,
                               ...Colors.accents,
                             ])
@@ -140,6 +153,8 @@ class _SettingsPageState extends State<SettingsPage> {
             }
           },
         ),
+
+        /// Data Directory
         if (Platform.isAndroid) ...[
           PreferenceTitle('Data Directory'),
           SwitchPreference(
@@ -198,35 +213,55 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ], '!notable_external_directory_enabled'),
         ],
+
+        /// Editor
         PreferenceTitle('Editor'),
         SwitchPreference(
           'Auto Save',
           'editor_auto_save',
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
         ),
         SwitchPreference(
           'Use Mode Switcher',
           'editor_mode_switcher',
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
         ),
         SwitchPreference(
           'Pair Brackets/Quotes',
           'editor_pair_brackets',
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
         ),
+
+        /// Search
         PreferenceTitle('Search'),
         SwitchPreference(
           'Search content of notes',
           'search_content',
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
         ),
+
+        /// Tags
         PreferenceTitle('Tags'),
         SwitchPreference(
           'Sort tags alphabetically in the sidebar',
           'sort_tags_in_sidebar',
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
         ),
+
+        /// Preview
         PreferenceTitle('Preview'),
         SwitchPreference(
           'Enable single line break syntax',
           'single_line_break_syntax',
           desc:
               'When enabled, single line breaks are rendered as real line breaks',
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
         ),
         /*        PreferenceTitle('Sync'),
         RadioPreference(
@@ -279,6 +314,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         */
+        /// More
         PreferenceTitle('More'),
         ListTile(
           title: Text('Recreate tutorial notes'),
@@ -317,6 +353,7 @@ class _SettingsPageState extends State<SettingsPage> {
           'Create sync logfile ',
           'debug_logs_sync',
         ), */
+        /// Experimental
         PreferenceTitle('Experimental'),
         SwitchPreference(
           'Enable Dendron support',
@@ -329,18 +366,24 @@ class _SettingsPageState extends State<SettingsPage> {
 
             if (mounted) setState(() {});
           },
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
         ),
         SwitchPreference(
           'Automatic bullet points',
           'auto_bullet_points',
           desc:
               'Adds a bullet point to a new line if the line before it had one',
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
         ),
         SwitchPreference(
           'Show virtual tags',
           'notes_list_virtual_tags',
           desc:
               'Adds a virtual tag (#/path) to notes which are in a subdirectory',
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
         ),
       ]),
     );

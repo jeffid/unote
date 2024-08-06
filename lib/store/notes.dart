@@ -1,31 +1,40 @@
 import 'dart:io';
 
-// import 'package:app/sync/webdav.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:path_provider/path_provider.dart';
 import 'package:preferences/preference_service.dart';
-import 'package:flutter/services.dart' show rootBundle;
 
+import '/data/samples.dart';
 import '/model/note.dart';
 import '/store/persistent.dart';
-import '/data/samples.dart';
+// import '/sync/webdav.dart';
 
 class NotesStore {
-  /* String subDirectoryNotes = ;
-  String subDirectoryAttachments = ; */
-
-  String get subDirectoryNotes => isDendronModeEnabled ? '' : '/notes';
-  String get subDirectoryAttachments =>
-      isDendronModeEnabled ? '/assets' : '/attachments';
-
-  bool get isDendronModeEnabled => PrefService.getBool('dendron_mode') ?? false;
-
-  late Directory notesDir, attachmentsDir;
-
-  String? searchText;
+  //
+  late Directory appDir, notesDir, attachmentsDir;
 
   late String syncMethod;
 
-  get syncMethodName {
+  String? searchText;
+
+  List<Note> allNotes = [];
+
+  List<Note> shownNotes = [];
+
+  String _currentTag = '';
+
+  Set<String> allTags = {};
+
+  List<String> rootTags = [];
+
+  String get currentTag => _currentTag;
+
+  set currentTag(String newTag) {
+    _currentTag = newTag;
+    PrefService.setString('current_tag', newTag);
+  }
+
+  String get syncMethodName {
     switch (syncMethod) {
       case 'webdav':
         return 'WebDav';
@@ -34,10 +43,21 @@ class NotesStore {
     }
   }
 
+  /* String subDirectoryNotes = ;
+  String subDirectoryAttachments = ; */
+
+  String get subNoteDir => isDendronMode ? '' : '/notes';
+
+  String get subAssetsDir => isDendronMode ? '/assets' : '/attachments';
+
+  bool get isDendronMode => PrefService.getBool('dendron_mode') ?? false;
+
+  ///
   void init() {
     syncMethod = PrefService.getString('sync') ?? '';
   }
 
+  ///
   Future createTutorialNotes() async {
     for (String fileName in Samples.tutorialNotes) {
       File('${notesDir.path}/$fileName').writeAsStringSync(
@@ -45,6 +65,7 @@ class NotesStore {
     }
   }
 
+  ///
   Future createTutorialAttachments() async {
     for (String fileName in Samples.tutorialAttachments) {
       File('${attachmentsDir.path}/$fileName').writeAsBytesSync(
@@ -54,37 +75,36 @@ class NotesStore {
     }
   }
 
-  late Directory applicationDocumentsDirectory;
-
+  ///
   Future listNotes() async {
-    applicationDocumentsDirectory = await getApplicationDocumentsDirectory();
+    appDir = await getApplicationDocumentsDirectory();
     Directory directory;
 
     if (PrefService.getBool('notable_external_directory_enabled') ?? false) {
       directory =
           Directory(PrefService.getString('notable_external_directory') ?? '');
     } else {
-      directory = applicationDocumentsDirectory;
+      directory = appDir;
     }
     PrefService.setString('notable_directory', directory.path);
 
     // print(isDendronModeEnabled);
 
-    notesDir = Directory('${directory.path}$subDirectoryNotes');
+    notesDir = Directory('${directory.path}$subNoteDir');
 
     PrefService.setString('notable_notes_directory', notesDir.path);
 
     if (!notesDir.existsSync()) {
       notesDir.createSync();
-      if (!isDendronModeEnabled) await createTutorialNotes();
+      if (!isDendronMode) await createTutorialNotes();
     }
 
-    attachmentsDir = Directory('${directory.path}$subDirectoryAttachments');
+    attachmentsDir = Directory('${directory.path}$subAssetsDir');
     PrefService.setString('notable_attachments_directory', attachmentsDir.path);
 
     if (!attachmentsDir.existsSync()) {
       attachmentsDir.createSync();
-      if (!isDendronModeEnabled) await createTutorialAttachments();
+      if (!isDendronMode) await createTutorialAttachments();
     }
 
     /* for (String fileName in Samples.tutorialNotes) {
@@ -103,20 +123,22 @@ class NotesStore {
     // _updateTagList();
   }
 
-  Future _listNotesInFolder(String dir, {bool isSubDirectory = false}) async {
+  ///
+  Future<void> _listNotesInFolder(String dir,
+      {bool isSubDirectory = false}) async {
     await for (var entity in Directory('${notesDir.path}$dir').list()) {
       if (entity is File) {
         try {
-          if (isDendronModeEnabled) {
-            if (!entity.path.endsWith('.md')) continue;
-          }
+          // only process markdown files
+          if (!entity.path.endsWith('.md')) continue;
+
           Note? note = await PersistentStore.readNote(entity);
 
           if (note != null) {
             if (PrefService.getBool('notes_list_virtual_tags') ?? false) {
               if (isSubDirectory) note.tags.add('#$dir');
             }
-            if (isDendronModeEnabled) {
+            if (isDendronMode) {
               var path = entity.path
                   .substring(notesDir.path.length, entity.path.length - 3);
               while (path.startsWith('/')) {
@@ -158,6 +180,7 @@ class NotesStore {
     }
   }
 
+  ///
   updateTagList() {
     for (Note note in allNotes) {
       for (String tag in note.tags) {
@@ -175,6 +198,7 @@ class NotesStore {
     rootTags.sort();
   }
 
+  ///
   List<String> getSubTags(String forTag) {
     Set<String> subTags =
         allTags.where((tag) => tag.startsWith(forTag) && tag != forTag).toSet();
@@ -192,6 +216,7 @@ class NotesStore {
     return subTagsList;
   }
 
+  ///
   filterAndSortNotes() {
     //shownNotes = List.from(allNotes);
 
@@ -254,10 +279,12 @@ class NotesStore {
     });
   }
 
+  ///
   List<Note> _filterByTag(List<Note> notes, String cTag) {
     return notes.where((note) => note.hasTag(cTag)).toList();
   }
 
+  ///
   int countNotesWithTag(List<Note> notes, String tag) {
     int count = 0;
     notes.forEach((note) {
@@ -266,32 +293,17 @@ class NotesStore {
     return count;
   }
 
-  List<Note> allNotes = [];
-
-  List<Note> shownNotes = [];
-
-  String currTag = '';
-
-  set currentTag(String newTag) {
-    currTag = newTag;
-    PrefService.setString('current_tag', newTag);
+  ///
+  Note getNote(String title) {
+    return allNotes.firstWhere((n) => n.title == title);
   }
 
-  String get currentTag => currTag;
-
-  Set<String> allTags = {};
-
-  List<String> rootTags = [];
-
+  ///
   Future<String?> syncNow() async {
 /*     switch (syncMethod) {
       case 'webdav':
         return await WebdavSync().syncFiles(this);
     } */
     return null;
-  }
-
-  Note getNote(String title) {
-    return allNotes.firstWhere((n) => n.title == title);
   }
 }

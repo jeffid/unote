@@ -98,6 +98,22 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "3.0.3"
+  cryptography:
+    dependency: "direct main"
+    description:
+      name: cryptography
+      sha256: d146b76d33d94548cf035233fbc2f4338c1242fa119013bead807d033fc4ae05
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.7.0"
+  cryptography_flutter:
+    dependency: "direct main"
+    description:
+      name: cryptography_flutter
+      sha256: a7fc3f0de42fb0947cbf213257aa3a69c89df561d104723ede8050658621f292
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.3.2"
   csslib:
     dependency: transitive
     description:
@@ -168,6 +184,14 @@ packages:
       url: "git@github.com:inote-flutter/flutter_app_info"
     source: git
     version: "2.0.0"
+  flutter_highlight:
+    dependency: "direct main"
+    description:
+      name: flutter_highlight
+      sha256: "7b96333867aa07e122e245c033b8ad622e4e3a42a1a2372cbb098a2541d8782c"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.7.0"
   flutter_markdown:
     dependency: "direct main"
     description:
@@ -214,6 +238,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.0.4"
+  highlight:
+    dependency: transitive
+    description:
+      name: highlight
+      sha256: "5353a83ffe3e3eca7df0abfb72dcf3fa66cc56b953728e7113ad4ad88497cf21"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.7.0"
   hive:
     dependency: transitive
     description:
@@ -254,6 +286,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.18.1"
+  js:
+    dependency: transitive
+    description:
+      name: js
+      sha256: f2c445dce49627136094980615a031419f7f3eb393237e4ecd97ac15dea343f3
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.6.7"
   logger:
     dependency: "direct main"
     description:
@@ -279,6 +319,22 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "7.2.2"
+  markdown_toolbar:
+    dependency: "direct main"
+    description:
+      name: markdown_toolbar
+      sha256: "5f4e2548afe96cc2ccdad22da87d380e4726d2d3385ddbb7035aa94daf9a4d47"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.5.0"
+  markdown_widget:
+    dependency: "direct main"
+    description:
+      name: markdown_widget
+      sha256: "216dced98962d7699a265344624bc280489d739654585ee881c95563a3252fac"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.3.2+6"
   matcher:
     dependency: transitive
     description:
@@ -460,7 +516,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: "17b7e0740b685cf6bf7cdfe2187c96387af3fa4f"
+      resolved-ref: caba8e4cc0d335ae23c4039ca79d0069c25d2163
       url: "git@github.com:inote-flutter/preferences"
     source: git
     version: "5.3.0+1"
@@ -529,6 +585,23 @@ packages:
       url: "git@github.com:inote-flutter/rich_code_editor"
     source: git
     version: "1.0.5"
+  rich_text_controller:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: HEAD
+      resolved-ref: "0ec3ba735ded64f79a22fa5f245d9fc8f887fed4"
+      url: "git@github.com:inote-flutter/rich_text_controller"
+    source: git
+    version: "2.0.1"
+  scroll_to_index:
+    dependency: transitive
+    description:
+      name: scroll_to_index
+      sha256: b707546e7500d9f070d63e5acf74fd437ec7eeeb68d3412ef7b0afada0b4f176
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "3.0.1"
   shared_preferences:
     dependency: "direct main"
     description:
@@ -750,6 +823,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "3.0.2"
+  visibility_detector:
+    dependency: transitive
+    description:
+      name: visibility_detector
+      sha256: dd5cc11e13494f432d15939c3aa8ae76844c42b723398643ce9addb88a5ed420
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.4.0+2"
   web:
     dependency: transitive
     description:

@@ -1,4 +1,4 @@
-<img align="left" width="120" height="120" src="https://github.com/inote-flutter/inote/raw/master/assets/icon/icon_ios.png" alt="App Icon">
+<img align="left" width="120" height="120" src="https://github.com/inote-flutter/inote/raw/main/assets/icon/icon-512.png" alt="App Icon">
 
 # iNote
 

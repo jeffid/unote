@@ -1,144 +1,46 @@
 import 'dart:io';
 
-import 'package:preferences/preference_service.dart';
 import 'package:front_matter/front_matter.dart' as fm;
+import 'package:preferences/preference_service.dart';
 
-import '/utils/yaml.dart';
 import '/model/note.dart';
-
-const supportedFrontMatterKeys = [
-  'title',
-  'modified',
-  'created',
-  'tags',
-  'attachments',
-  'pinned',
-  'favorite',
-  'deleted',
-  'updated',
-];
+import '/utils/logger.dart';
+import '/utils/yaml.dart';
 
 ///
 class PersistentStore {
-  static bool get isDendronModeEnabled =>
+  static bool get isDendronMode =>
       (PrefService.getBool('dendron_mode') ?? false);
 
+  /// [readNote]
+  /// markdown file content example：
+  /// ```md
+  /// ---
+  /// title: 01 - The Data Directory
+  /// tags: [Basics, Notebooks/Tutorial]
+  /// created: '2018-12-16T21:43:52.886Z'
+  /// modified: '2020-07-05T12:00:00.000Z'
+  /// ---
   ///
-  static Future<String?> readContent(Note note) async {
-    if (!note.file.existsSync()) return null;
-
-    String fileContent = await note.file.readAsString();
-
-    // var content;
-    String content = '';
-
-    if (fileContent.trimLeft().startsWith('---')) {
-      var doc = fm.parse(fileContent);
-      if (doc.content != null) {
-        content = doc.content!.trimLeft();
-      } else {
-        content = fileContent.trimLeft();
-      }
-    } else {
-      content = fileContent.trimLeft();
-    }
-
-    if (isDendronModeEnabled) {
-      if (!content.startsWith('# ')) {
-        content = '# ${note.title}\n\n' + content;
-      }
-    }
-
-    return content;
-  }
-
-  ///
-  static Future saveNote(Note note, [String? content]) async {
-    // print('PersistentStore.saveNote');
-
-    if (content == null) {
-      content = await readContent(note);
-    }
-    if (isDendronModeEnabled) {
-      final index = content?.indexOf('\n');
-      if (index != -1) content = content?.substring(index!).trimLeft();
-    }
-
-    String header = '---\n';
-    Map data = {};
-
-    data['title'] = note.title;
-
-    if (PrefService.getBool('notes_list_virtual_tags') ?? false) {
-      note.tags.removeWhere((s) => s.startsWith('#/'));
-    }
-
-    if (!isDendronModeEnabled) {
-      if (note.tags.isNotEmpty) data['tags'] = note.tags;
-    }
-
-    if (note.attachments.isNotEmpty) data['attachments'] = note.attachments;
-
-    if (note.isMillisecond) {
-      data['created'] = note.created.millisecondsSinceEpoch;
-      data[note.idUpdatedInsteadOfModified ? 'updated' : 'modified'] =
-          note.modified.millisecondsSinceEpoch;
-    } else {
-      data['created'] = note.created.toIso8601String();
-      data[note.idUpdatedInsteadOfModified ? 'updated' : 'modified'] =
-          note.modified.toIso8601String();
-    }
-
-    if (note.pinned) data['pinned'] = true;
-    if (note.favorite) data['favorite'] = true;
-    if (note.deleted) data['deleted'] = true;
-
-    if (note.additionalFrontMatterKeys.isNotEmpty) {
-      data.addAll(note.additionalFrontMatterKeys.cast<String, dynamic>());
-    }
-
-    header += toYamlString(data);
-
-    if (!header.endsWith('\n')) header += '\n';
-
-    header += '---\n\n';
-
-    // print(header);
-
-    note.file.writeAsStringSync(header + content!);
-    /*  print(header + content); */
-  }
-
-  ///
+  /// # H1 - The Data Directory
+  /// content text...
+  /// ## H2
+  /// ```
   static Future<Note?> readNote(File file) async {
     // print('PersistentStore.readNote');
 
     if (!file.existsSync()) return null;
+    Note note = Note(f: file);
 
-    String fileContent = file.readAsStringSync();
+    Map header = {};
 
-    Map header;
+    String fileContent = file.readAsStringSync().trimLeft();
 
-    if (fileContent.trimLeft().startsWith('---')) {
-      var doc = fm.parse(fileContent);
-/* 
-        String headerString = fileContent.split('---')[1]; */
-
+    if (fileContent.startsWith('---')) {
+      fm.FrontMatterDocument doc = fm.parse(fileContent);
+      // String headerString = fileContent.split('---')[1];
       header = doc.data ?? {};
-    } else {
-      header = {};
     }
-
-    /* for (String line in headerString.split('\n')) {
-          if (line.trim().length == 0) continue;
-          print(line);
-          String key=line.split(':').first;
-          header[key] = line.sub;
-        } */
-    //print(header);
-    Note note = Note();
-
-    note.file = file;
 
     if (header['title'] != null) {
       note.title = header['title'].toString();
@@ -150,8 +52,8 @@ class PersistentStore {
       note.title = title;
     }
 
-// note modified time
-    if (header['modified'] != null && !isDendronModeEnabled) {
+    // note modified time
+    if (header['modified'] != null && !isDendronMode) {
       if (header['modified'] is int) {
         note.isMillisecond = true;
         note.modified = DateTime.fromMillisecondsSinceEpoch(header['modified']);
@@ -170,7 +72,7 @@ class PersistentStore {
       note.modified = file.lastModifiedSync();
     }
 
-// note created time
+    // note created time
     if (header['created'] != null) {
       if (header['created'] is int) {
         note.isMillisecond = true;
@@ -182,24 +84,113 @@ class PersistentStore {
       note.created = note.modified;
     }
 
-    /* 
-        note.tags =
-            (header['tags'] as YamlList).map((s) => s.toString()).toList(); */
+    // note.tags = (header['tags'] as YamlList).map((s) => s.toString()).toList();
     note.tags = List.from((header['tags'] ?? []).cast<String>());
     note.attachments = List.from((header['attachments'] ?? []).cast<String>());
 
     note.pinned = header['pinned'] ?? false;
     note.favorite = header['favorite'] ?? false;
     note.deleted = header['deleted'] ?? false;
+    note.encrypted = header['encrypted'] ?? false;
 
     if (header.isNotEmpty) {
-      note.additionalFrontMatterKeys = Map<String, dynamic>.from(header);
-
-      note.additionalFrontMatterKeys
-          .removeWhere((key, value) => supportedFrontMatterKeys.contains(key));
+      note.header = Map<String, dynamic>.from(header);
+      note.header
+          .removeWhere((key, value) => !Note.validHeaderKeys.contains(key));
     }
 
     return note;
+  }
+
+  /// [readContent]
+  static Future<String?> readContent(Note note) async {
+    if (!note.file.existsSync()) return null;
+
+    String fileContent = (await note.file.readAsStringSync()).trimLeft();
+
+    String content = fileContent;
+
+    if (fileContent.startsWith('---')) {
+      fm.FrontMatterDocument doc = fm.parse(fileContent);
+      if (doc.content != null) content = doc.content!.trimLeft();
+    }
+
+    //
+    if (note.encrypted) {
+      (String, bool) dec = await note.encryption!.decrypt(content);
+      note.isDecryptSuccess = dec.$2;
+      if (note.isDecryptSuccess) content = dec.$1;
+    }
+
+    if (isDendronMode) {
+      if (!content.startsWith('# ')) {
+        content = '# ${note.title}\n\n' + content;
+      }
+    }
+
+    return content;
+  }
+
+  ///
+  static Future saveNote(Note note, [String? content]) async {
+    // print('PersistentStore.saveNote');
+    print(('saveNote', content));
+    if (content == null) content = await readContent(note);
+
+    if (isDendronMode) {
+      final index = content?.indexOf('\n');
+      if (index != -1) content = content?.substring(index!).trimLeft();
+    }
+
+    // encrypt content
+    if (note.encrypted) {
+      content = await note.encryption!.encrypt(content!);
+      print(('saveNote > encrypt', content));
+    }
+
+    String header = '---\n';
+    Map data = {};
+
+    data['title'] = note.title;
+
+    if (PrefService.getBool('notes_list_virtual_tags') ?? false) {
+      note.tags.removeWhere((s) => s.startsWith('#/'));
+    }
+
+    if (!isDendronMode) {
+      if (note.tags.isNotEmpty) data['tags'] = note.tags;
+    }
+
+    if (note.attachments.isNotEmpty) data['attachments'] = note.attachments;
+
+    if (note.isMillisecond) {
+      data['created'] = note.created.millisecondsSinceEpoch;
+      data[note.idUpdatedInsteadOfModified ? 'updated' : 'modified'] =
+          note.modified.millisecondsSinceEpoch;
+    } else {
+      data['created'] = note.created.toIso8601String();
+      data[note.idUpdatedInsteadOfModified ? 'updated' : 'modified'] =
+          note.modified.toIso8601String();
+    }
+
+    if (note.pinned) data['pinned'] = true;
+    if (note.favorite) data['favorite'] = true;
+    if (note.deleted) data['deleted'] = true;
+    if (note.encrypted) data['encrypted'] = true;
+
+    if (note.header.isNotEmpty) {
+      data.addAll(note.header.cast<String, dynamic>());
+    }
+
+    header += toYamlString(data);
+    if (!header.endsWith('\n')) header += '\n';
+    header += '---\n\n';
+
+    logger.d(('saveNote', note.file.path));
+    logger.d(header);
+
+    note.file.writeAsStringSync(header + content!);
+    /*  print(header + content); */
   }
 
   ///

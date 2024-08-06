@@ -48,6 +48,11 @@ dependencies:
   logger: ^2.3.0
   webview_all: ^0.4.1
   shared_preferences: 2.2.0
+  markdown_toolbar: ^0.5.0
+  markdown_widget: ^2.3.2+6
+  flutter_highlight: ^0.7.0
+  cryptography: ^2.7.0
+  cryptography_flutter: ^2.3.2
 
   flutter_app_info:
      git: git@github.com:inote-flutter/flutter_app_info
@@ -66,6 +71,8 @@ dependencies:
   rich_code_editor:
     #    git: https://github.com/bats64mgutsi/rich_code_editor.git
     git: git@github.com:inote-flutter/rich_code_editor
+  rich_text_controller:
+    git: git@github.com:inote-flutter/rich_text_controller
 
 dependency_overrides:
 # #  shared_preferences: ^2.0.4
