@@ -9,8 +9,8 @@ import '/store/encryption.dart';
 /// ---
 /// title: 01 - The Data Directory
 /// tags: [Basics, Notebooks/Tutorial]
-/// created: '2018-12-16T21:43:52.886Z'
-/// modified: '2020-07-05T12:00:00.000Z'
+/// created: 1723268317678
+/// updated: 1723268317678
 /// ---
 ///
 /// # H1 - The Data Directory
@@ -30,7 +30,7 @@ class Note {
 
   DateTime created = DateTime.now();
 
-  DateTime modified = DateTime.now();
+  DateTime updated = DateTime.now();
 
   List<String> tags = [];
 
@@ -46,12 +46,6 @@ class Note {
 
   /// Whether decryption was successful with the incoming key
   bool isDecryptSuccess = false;
-
-  /// Whether the time value is recorded digitally in milliseconds rather than in date format
-  bool isMillisecond = false;
-
-  /// Whether to use `updated` as the document update time field. default is `modified`.
-  bool idUpdatedInsteadOfModified = false;
 
   /// Document content header data(e.g., title, created)
   Map<String, dynamic> header = {};
@@ -77,7 +71,6 @@ class Note {
   ///
   static const List<String> validHeaderKeys = [
     'title',
-    'modified',
     'updated',
     'created',
     'tags',

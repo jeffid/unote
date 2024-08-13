@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:preferences/preference_service.dart';
 
+import '/constant/app.dart' as ca;
 ///
 class ThemeNotifier with ChangeNotifier {
   ///
   ThemeNotifier() {
     _accentColor =
-        Color(PrefService.getInt('theme_color') ?? _defaultThemeColor.value);
+        Color(PrefService.getInt(ca.themeColor) ?? _defaultThemeColor.value);
     _setOnAccentColor(_accentColor);
 
-    updateTheme(PrefService.getString('theme') ?? 'light');
+    updateTheme(PrefService.getString(ca.theme) ?? ThemeType.light.name);
   }
 
   static const Color _defaultThemeColor = Color(0xff21d885);

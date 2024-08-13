@@ -78,4 +78,5 @@
 
 .env
 *.bak
+.vscode/settings.json
 _

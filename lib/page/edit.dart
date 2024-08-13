@@ -10,13 +10,15 @@ import 'package:flutter_app_info/device_info_plus.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:markd/markdown.dart' as markd;
 import 'package:markdown_toolbar/markdown_toolbar.dart';
+import 'package:path/path.dart' as p;
 import 'package:preferences/preference_service.dart';
 import 'package:rich_text_controller/rich_text_controller.dart';
 // import 'package:front_matter/front_matter.dart' as fm;
 // import 'package:markdown_toolbar/markdown_toolbar.dart';
 
-import '/editor/syntax_highlighter.dart';
+import '/constant/app.dart' as ca;
 import '/main.dart';
+import '/generated/l10n.dart';
 import '/model/note.dart';
 import '/store/encryption.dart';
 import '/store/notes.dart';
@@ -58,8 +60,6 @@ class _EditPageState extends State<EditPage> {
 
   // bool _isContentReady = false;
 
-  NoteSyntaxHighlighter _syntaxHighlighterBase = NoteSyntaxHighlighter();
-
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
 
   GlobalKey _richTextFieldKey = GlobalKey();
@@ -81,8 +81,8 @@ class _EditPageState extends State<EditPage> {
     _loadContent();
 
     //_updateMaxLines();
-    if (PrefService.getBool('editor_mode_switcher') ?? true) {
-      if (PrefService.getBool('editor_mode_switcher_is_preview') ?? false) {
+    if (PrefService.getBool(ca.canShowModeSwitcher) ?? true) {
+      if (PrefService.getBool(ca.isPreviewMode) ?? false) {
         setState(() {
           _previewEnabled = true;
         });
@@ -107,17 +107,14 @@ class _EditPageState extends State<EditPage> {
   ///
   @override
   Widget build(BuildContext context) {
-    if (_syntaxHighlighterBase.accentColor == null)
-      _syntaxHighlighterBase.init(Theme.of(context).colorScheme.secondary);
-
     // Disable note preview/render feature on Android KitKat see #32
     if (appInfo.platform.isAndroid &&
         (appInfo.platform.device as AndroidDeviceInfo).version.sdkInt < 20) {
       isPreviewFeatureEnabled = false;
     }
 
-    logger.d(currentData);
-    logger.d('_previewEnabled: ${_previewEnabled}');
+    // logger.d(currentData);
+    // logger.d('_previewEnabled: ${_previewEnabled}');
 
     return PopScope(
       key: GlobalKey(),
@@ -156,6 +153,11 @@ class _EditPageState extends State<EditPage> {
                           decoration: const InputDecoration(
                             contentPadding: EdgeInsets.fromLTRB(6, 4, 0, 4),
                           ),
+                          textInputAction: TextInputAction.none,
+                          onSubmitted: (value) {
+                            _editCtrl.value = _onEnterPress(
+                                _editCtrl.text, _editCtrl.selection.start);
+                          },
                         ),
                       ),
                     ],
@@ -195,7 +197,7 @@ class _EditPageState extends State<EditPage> {
             },
           ),
         if (isPreviewFeatureEnabled)
-          ((PrefService.getBool('editor_mode_switcher') ?? true)
+          ((PrefService.getBool(ca.canShowModeSwitcher) ?? true)
               ? Switch(
                   value: _previewEnabled,
                   // activeColor: Theme.of(context).primaryIconTheme.color,
@@ -213,8 +215,7 @@ class _EditPageState extends State<EditPage> {
                     },
                   ),
                   onChanged: (value) {
-                    PrefService.setBool(
-                        'editor_mode_switcher_is_preview', value);
+                    PrefService.setBool(ca.isPreviewMode, value);
                     setState(() {
                       _previewEnabled = value;
                     });
@@ -227,7 +228,7 @@ class _EditPageState extends State<EditPage> {
                       MaterialPageRoute(
                         builder: (context) => Scaffold(
                           appBar: AppBar(
-                            title: Text('Preview'),
+                            title: Text(S.current.Preview),
                           ),
                           body: PreviewPage(_editCtrl.text),
                         ),
@@ -257,7 +258,7 @@ class _EditPageState extends State<EditPage> {
                 SizedBox(
                   width: 8,
                 ),
-                Text(note.pinned ? 'Unpin' : 'Pin'),
+                Text(note.pinned ? S.current.Unpin : S.current.Pin),
               ],
             ),
           ),
@@ -272,7 +273,7 @@ class _EditPageState extends State<EditPage> {
                 SizedBox(
                   width: 8,
                 ),
-                Text(note.favorite ? 'Unfavorite' : 'Favorite'),
+                Text(note.favorite ? S.current.Unfavorite : S.current.Favorite),
               ],
             ),
           ),
@@ -287,7 +288,9 @@ class _EditPageState extends State<EditPage> {
                 SizedBox(
                   width: 8,
                 ),
-                Text(note.encrypted ? 'Disable Encryption' : 'Encrypt'),
+                Text(note.encrypted
+                    ? S.current.Disable_Encryption
+                    : S.current.Encrypt),
               ],
             ),
           ),
@@ -302,7 +305,9 @@ class _EditPageState extends State<EditPage> {
                 SizedBox(
                   width: 8,
                 ),
-                Text(note.deleted ? 'Restore from trash' : 'Move to trash'),
+                Text(note.deleted
+                    ? S.current.Restore_from_trash
+                    : S.current.Move_to_trash),
               ],
             ),
           ),
@@ -367,7 +372,7 @@ class _EditPageState extends State<EditPage> {
                 SizedBox(
                   width: 8,
                 ),
-                Text('Add Tag'),
+                Text(S.current.Add_Tag),
               ],
             ),
           ),
@@ -391,7 +396,7 @@ class _EditPageState extends State<EditPage> {
               String pwd = await showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: Text('Enter password'),
+                      title: Text(S.current.Enter_password),
                       content: TextField(
                         controller: ctrl,
                         autofocus: true,
@@ -401,13 +406,13 @@ class _EditPageState extends State<EditPage> {
                       ),
                       actions: <Widget>[
                         TextButton(
-                          child: Text('Cancel'),
+                          child: Text(S.current.Cancel),
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
                         ),
                         TextButton(
-                          child: Text('Confirm'),
+                          child: Text(S.current.Confirm),
                           onPressed: () {
                             Navigator.of(context).pop(ctrl.text);
                           },
@@ -439,55 +444,46 @@ class _EditPageState extends State<EditPage> {
 
           case 'addAttachment':
             final result = await FilePicker.platform.pickFiles();
-            File file = File(result!.files.first.path ?? '');
+            if (result == null) break;
+            File file = File(result.files.first.path ?? '');
+            if (!file.existsSync()) break;
 
-            if (file.existsSync()) {
-              String fullFileName = file.path.split('/').last;
-              int dotIndex = fullFileName.indexOf('.');
+            String fullFileName = p.basename(file.path);
+            String fileName = fullFileName.split('.').first;
+            String ext = p.extension(file.path);
 
-              String fileName = fullFileName.substring(0, dotIndex);
-              String fileEnding = fullFileName.substring(dotIndex);
+            int i = 0;
+            File newFile;
+            do {
+              fullFileName = i > 0 ? fileName + ' ($i)' + ext : fullFileName;
+              newFile =
+                  File(store.attachmentsDir.path + p.separator + fullFileName);
 
-              File newFile =
-                  File(store.attachmentsDir.path + '/' + fullFileName);
+              i++;
+            } while (newFile.existsSync());
 
-              int i = 0;
+            await file.copy(newFile.path);
 
-              while (newFile.existsSync()) {
-                i++;
-                newFile = File(store.attachmentsDir.path +
-                    '/' +
-                    fileName +
-                    ' ($i)' +
-                    fileEnding);
-              }
-              await file.copy(newFile.path);
+            final attachmentName = p.basename(newFile.path);
 
-              final attachmentName = newFile.path.split('/').last;
+            note.attachments.add(attachmentName);
 
-              note.attachments.add(attachmentName);
+            await file.delete();
 
-              await file.delete();
+            int start = _editCtrl.selection.start;
 
-              int start = _editCtrl.selection.start;
+            final insert = '![](@attachment/$attachmentName)';
+            try {
+              _editCtrl.text = _editCtrl.text.substring(0, start) +
+                  insert +
+                  _editCtrl.text.substring(start);
 
-              final insert = '![](@attachment/$attachmentName)';
-              try {
-                _editCtrl.text = _editCtrl.text.substring(
-                      0,
-                      start,
-                    ) +
-                    insert +
-                    _editCtrl.text.substring(
-                      start,
-                    );
-
-                _editCtrl.selection = TextSelection(
-                    baseOffset: start, extentOffset: start + insert.length);
-              } catch (e) {
-                // TODO Handle this case
-              }
+              _editCtrl.selection = TextSelection(
+                  baseOffset: start, extentOffset: start + insert.length);
+            } catch (e) {
+              // TODO Handle this case
             }
+
             break;
 
           case 'removeAttachment':
@@ -496,18 +492,19 @@ class _EditPageState extends State<EditPage> {
             bool remove = await showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                          title: Text('Delete Attachment'),
-                          content: Text(
-                              'Do you want to delete the attachment "$attachment"? This will remove it from this note and delete it permanently on disk.'),
+                          title: Text(S.current.Delete_Attachment),
+                          content: Text(S.current
+                              .Do_you_want_to_delete_the_attachment(
+                                  attachment)),
                           actions: <Widget>[
                             TextButton(
-                              child: Text('Cancel'),
+                              child: Text(S.current.Cancel),
                               onPressed: () {
                                 Navigator.of(context).pop();
                               },
                             ),
                             TextButton(
-                              child: Text('Delete'),
+                              child: Text(S.current.Delete),
                               onPressed: () {
                                 Navigator.of(context).pop(true);
                               },
@@ -516,7 +513,8 @@ class _EditPageState extends State<EditPage> {
                         )) ??
                 false;
             if (remove) {
-              File file = File(store.attachmentsDir.path + '/' + attachment);
+              File file =
+                  File(store.attachmentsDir.path + p.separator + attachment);
               await file.delete();
               note.attachments.remove(attachment);
             }
@@ -531,7 +529,7 @@ class _EditPageState extends State<EditPage> {
             String newTag = await showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                          title: Text('Add Tag'),
+                          title: Text(S.current.Add_Tag),
                           content: TextField(
                             controller: ctrl,
                             autofocus: true,
@@ -541,13 +539,13 @@ class _EditPageState extends State<EditPage> {
                           ),
                           actions: <Widget>[
                             TextButton(
-                              child: Text('Cancel'),
+                              child: Text(S.current.Cancel),
                               onPressed: () {
                                 Navigator.of(context).pop();
                               },
                             ),
                             TextButton(
-                              child: Text('Add'),
+                              child: Text(S.current.Add),
                               onPressed: () {
                                 Navigator.of(context).pop(ctrl.text);
                               },
@@ -568,18 +566,19 @@ class _EditPageState extends State<EditPage> {
             bool remove = await showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                          title: Text('Remove Tag'),
-                          content: Text(
-                              'Do you want to remove the tag "$tag" from this note?'),
+                          title: Text(S.current.Remove_Tag),
+                          content: Text(S.current
+                              .Do_you_want_to_remove_the_tag_from_this_note(
+                                  tag)),
                           actions: <Widget>[
                             TextButton(
-                              child: Text('Cancel'),
+                              child: Text(S.current.Cancel),
                               onPressed: () {
                                 Navigator.of(context).pop();
                               },
                             ),
                             TextButton(
-                              child: Text('Remove'),
+                              child: Text(S.current.Remove),
                               onPressed: () {
                                 Navigator.of(context).pop(true);
                               },
@@ -617,17 +616,15 @@ class _EditPageState extends State<EditPage> {
     String title;
 
     try {
-      if (!currentData.trimLeft().startsWith('# ')) throw 'No MD title';
+      if (!currentData.trimLeft().startsWith('# ')) throw S.current.No_MD_title;
 
       String markedTitle = markd.markdownToHtml(
-          RegExp(
-                r'(?<=# ).*',
-              ).stringMatch(currentData) ??
-              '',
+          RegExp(r'(?<=# ).*').stringMatch(currentData) ?? '',
           extensionSet: markd.ExtensionSet.gitHubWeb);
       // print(markedTitle);
 
       title = markedTitle.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+      logger.d(title);
     } catch (e) {
       title = note.title;
     }
@@ -635,17 +632,17 @@ class _EditPageState extends State<EditPage> {
 
     File? oldFile;
     if (note.title != title && !store.isDendronMode) {
-      if (File(
-              "${PrefService.getString('notable_notes_directory') ?? ''}/${title}.md")
+      if (File("${PrefService.getString(ca.notesDirectory) ?? ''}/${title}.md")
           .existsSync()) {
         showDialog(
             context: context,
             builder: (context) => AlertDialog(
-                  title: Text('Conflict'),
-                  content: Text('There is already a note with this title.'),
+                  title: Text(S.current.Conflict),
+                  content:
+                      Text(S.current.There_is_already_a_note_with_this_title),
                   actions: <Widget>[
                     TextButton(
-                      child: Text('Ok'),
+                      child: Text(S.current.Ok),
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
@@ -656,13 +653,13 @@ class _EditPageState extends State<EditPage> {
       } else {
         oldFile = note.file;
         note.file = File(
-            "${PrefService.getString('notable_notes_directory') ?? ''}/${title}.md");
+            "${PrefService.getString(ca.notesDirectory) ?? ''}/${title}.md");
       }
     }
 
     note.title = title;
 
-    note.modified = DateTime.now();
+    note.updated = DateTime.now();
 
     await PersistentStore.saveNote(note, currentData);
 
@@ -678,18 +675,20 @@ class _EditPageState extends State<EditPage> {
     RegExp link = RegExp(r'\[([^\[\]]*?)\]\(([^\(\)]+?)\)');
     RegExp image = RegExp(r'!\[([^\[\]]*?)\]\(([^\(\)]+?)\)');
     RegExp horizontal = RegExp(r'^(?<=\s*)-{3,}(?=\s*$)');
-    RegExp numberList = RegExp(r'^(?<=\s*)\d\.(?=\s+)');
+    RegExp numberList = RegExp(r'^(?<=\s*)\d+\.(?=\s+?)');
+    RegExp bulletedList = RegExp(r'^(?<=\s*)[-\*](?=\s+?)');
     RegExp inlineBlock = RegExp(r'(?<!`)`[^`\r\n]+?`(?!`)', multiLine: true);
     RegExp multiLineBlock = RegExp(r'^```[^`]+```$', multiLine: true);
-    RegExp bulletedList = RegExp(r'^(?<=\s*)[-\*](?=\s+)');
 
     _editCtrl = RichTextController(
       regExpMultiLine: true,
+      regExpCaseSensitive: false,
       targetMatches: [
         MatchTargetItem(
-          text: 'iNote',
+          text: 'todo',
           style: TextStyle(
             color: themeData.colorScheme.secondary,
+            fontWeight: FontWeight.w500,
           ),
           allowInlineMatching: true,
         ),
@@ -788,6 +787,7 @@ class _EditPageState extends State<EditPage> {
       onMatch: (List<String> matches) {
         // Do something with matches.
         // as long as you're typing, the controller will keep updating the list.
+        logger.d(matches);
       },
       deleteOnBack: true,
       // You can control the [RegExp] options used:
@@ -800,6 +800,10 @@ class _EditPageState extends State<EditPage> {
 
       Uint8List diff =
           bsdiff(utf8.encode(_editCtrl.text), utf8.encode(currentData));
+      logger.d((
+        'ctrl Listener',
+        diff,
+      ));
       int cursorPosition = max(
           0,
           _editCtrl.text.length > currentData.length
@@ -821,7 +825,7 @@ class _EditPageState extends State<EditPage> {
       currentData = _editCtrl.text;
       // logger.d(history.toString());
       // logger.d(history.length);
-      if (PrefService.getBool('editor_auto_save') ?? false) {
+      if (PrefService.getBool(ca.canAutoSave) ?? false) {
         _autosave();
       } else if (_hasSaved) {
         setState(() {
@@ -837,7 +841,7 @@ class _EditPageState extends State<EditPage> {
     var doc = fm.parse(content); */
     String content = '';
     while (true) {
-      content = await PersistentStore.readContent(note) ?? '';
+      content = await PersistentStore.readContent(note);
 
       // The password entered cannot decrypt the document back to the previous page
       if (note.encrypted && !note.isDecryptSuccess) {
@@ -847,7 +851,7 @@ class _EditPageState extends State<EditPage> {
         String newPwd = await showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: Text('Decryption Failed'),
+                title: Text(S.current.Decryption_Failed),
                 // content: Text('The password entered cannot decrypt this note.'),
                 content: TextField(
                   controller: ctrl,
@@ -855,8 +859,8 @@ class _EditPageState extends State<EditPage> {
                   readOnly: !canRetry,
                   decoration: InputDecoration(
                     hintText: canRetry
-                        ? 'Retry password'
-                        : 'Please try again in ${cd} second(s)',
+                        ? S.current.Retry_password
+                        : S.current.Please_try_again_in_cd_second(cd),
                   ),
                   onSubmitted: (str) {
                     Navigator.of(context).pop(str);
@@ -864,13 +868,13 @@ class _EditPageState extends State<EditPage> {
                 ),
                 actions: <Widget>[
                   TextButton(
-                    child: Text('Back'),
+                    child: Text(S.current.Back),
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
                   ),
                   TextButton(
-                    child: Text('Retry'),
+                    child: Text(S.current.Retry),
                     onPressed: canRetry
                         ? () => Navigator.of(context).pop(ctrl.text)
                         : null,
@@ -911,6 +915,72 @@ class _EditPageState extends State<EditPage> {
     }
   }
 
+  /// [_onEnterPress]
+  /// [cursorIdx] is selection.start
+  TextEditingValue _onEnterPress(String text, int cursorIdx) {
+    int offset = cursorIdx;
+
+    // before part without CR(13) or LF(10) at end
+    final String befPart = text.substring(0, cursorIdx);
+
+    String befLine = befPart.split('\n').last;
+
+    // list mark
+    RegExpMatch? match =
+        RegExp(r'^(\s*)([-\*]|\d+)(\.?)(\s+)(.*)$').firstMatch(befLine);
+    int spaceLen = 0;
+    String befLineWords = '';
+    String mark = '';
+    if (match != null) {
+      spaceLen = match[1]!.length;
+      befLineWords = match[5]!;
+
+      mark = match[2]!;
+      int? markNum = num.tryParse(mark)?.toInt();
+      if (markNum != null && match[3]!.isNotEmpty) {
+        // increase list number
+        mark = (markNum + 1).toString() + '.';
+      }
+    }
+    int befLineLen = befLine.length;
+    int befTextLen = befLineLen - spaceLen;
+
+    if (mark.isNotEmpty) {
+      if (befLineWords.isEmpty) {
+        if (spaceLen >= 2) {
+          // indent two spaces
+          int befTextStart = cursorIdx - befTextLen;
+          text = text.substring(0, befTextStart - 2) +
+              text.substring(befTextStart);
+          offset = cursorIdx - 2;
+        } else {
+          // delete empty list line
+          int befLineStart = cursorIdx - befLineLen;
+          text = text.substring(0, befLineStart) + text.substring(cursorIdx);
+          offset = befLineStart;
+        }
+      } else {
+        // add new list line with mark at the start
+        if (spaceLen > 0) mark = List.filled(spaceLen, ' ').join() + mark;
+        mark = '\n$mark ';
+        text = befPart + mark + text.substring(cursorIdx);
+        offset = cursorIdx + mark.length;
+      }
+    } else {
+      // add new empty line
+      text = befPart + '\n' + text.substring(cursorIdx);
+      offset = cursorIdx + 1;
+    }
+
+    return TextEditingValue(
+      text: text,
+      composing: TextRange.empty,
+      selection: TextSelection.fromPosition(
+        TextPosition(affinity: TextAffinity.upstream, offset: offset),
+      ),
+    );
+  }
+
   ///
   void _onPopInvoked(bool didPop) async {
     logger.d('_onPopInvoked:: _hasSaved: ${_hasSaved} didPop: ${didPop} ');
@@ -923,18 +993,18 @@ class _EditPageState extends State<EditPage> {
       shouldPop = await showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                    title: Text('Unsaved changes'),
-                    content: Text(
-                        'Do you really want to discard your current changes?'),
+                    title: Text(S.current.Unsaved_changes),
+                    content: Text(S.current
+                        .Do_you_really_want_to_discard_your_current_changes),
                     actions: <Widget>[
                       TextButton(
-                        child: Text('Cancel'),
+                        child: Text(S.current.Cancel),
                         onPressed: () {
                           Navigator.of(context).pop(false);
                         },
                       ),
                       TextButton(
-                        child: Text('Exit'),
+                        child: Text(S.current.Exit),
                         onPressed: () {
                           Navigator.of(context).pop(true);
                         },

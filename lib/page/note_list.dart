@@ -7,9 +7,9 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:preferences/preferences.dart';
 // import 'package:quick_actions/quick_actions.dart';
 // import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'package:uuid/uuid.dart';
 
-import '/constants/app_constants.dart';
+import '/constant/app.dart' as ca;
+import '/generated/l10n.dart';
 import '/main.dart';
 import '/model/note.dart';
 import '/store/encryption.dart';
@@ -61,7 +61,7 @@ class _NoteListPageState extends State<NoteListPage> {
   void initState() {
     store.currentTag = widget.filterTag.isNotEmpty
         ? widget.filterTag
-        : PrefService.getString('current_tag') ?? '';
+        : PrefService.getString(ca.currentTag) ?? '';
 
     if (widget.searchText.isNotEmpty) {
       _searchFieldCtrl.text = widget.searchText;
@@ -188,7 +188,7 @@ class _NoteListPageState extends State<NoteListPage> {
             ? TextField(
                 decoration: InputDecoration(
                   isDense: true,
-                  labelText: 'Search',
+                  labelText: S.current.Search,
                   labelStyle: TextStyle(color: fgColor),
                   focusedBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: fgColor),
@@ -210,7 +210,7 @@ class _NoteListPageState extends State<NoteListPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Text(appName),
+                  Text(ca.appName),
                   if (store.currentTag.length > 0)
                     Text(
                       store.currentTag,
@@ -261,24 +261,24 @@ class _NoteListPageState extends State<NoteListPage> {
             width: 16,
           ),
           DropdownButton<dynamic>(
-            value: PrefService.getString('sort_key') ?? 'title',
+            value: PrefService.getString(ca.sortKey) ?? ca.sortByTitle,
             underline: Container(),
             onChanged: (key) {
-              PrefService.setString('sort_key', key);
+              PrefService.setString(ca.sortKey, key);
               _filterAndSortNotes();
             },
             items: <DropdownMenuItem>[
               DropdownMenuItem(
-                value: 'title',
-                child: Text('Sort by Title'),
+                value: ca.sortByTitle,
+                child: Text(S.current.Sort_by_Title),
               ),
               DropdownMenuItem(
-                value: 'date_created',
-                child: Text('Sort by Date Created'),
+                value: ca.sortByCreated,
+                child: Text(S.current.Sort_by_Created_Date),
               ),
               DropdownMenuItem(
-                value: 'date_modified',
-                child: Text('Sort by Date Modified'),
+                value: ca.sortByUpdated,
+                child: Text(S.current.Sort_by_Updated_Date),
               ),
             ],
           ),
@@ -287,14 +287,14 @@ class _NoteListPageState extends State<NoteListPage> {
           ),
           InkWell(
             child: Icon(
-              (PrefService.getBool('sort_direction_asc') ?? true)
+              (PrefService.getBool(ca.isSortAsc) ?? true)
                   ? Icons.keyboard_arrow_down
                   : Icons.keyboard_arrow_up,
               size: 32,
             ),
             onTap: () {
-              PrefService.setBool('sort_direction_asc',
-                  !(PrefService.getBool('sort_direction_asc') ?? true));
+              PrefService.setBool(
+                  ca.isSortAsc, !(PrefService.getBool(ca.isSortAsc) ?? true));
 
               _filterAndSortNotes();
             },
@@ -318,7 +318,7 @@ class _NoteListPageState extends State<NoteListPage> {
           ActionPane(motion: const DrawerMotion(), children: <Widget>[
         if (note.deleted) ...[
           SlidableAction(
-            label: 'Delete',
+            label: S.current.Delete,
             backgroundColor: Colors.red,
             icon: Icons.delete_forever,
             onPressed: (context) async {
@@ -330,13 +330,13 @@ class _NoteListPageState extends State<NoteListPage> {
                             content: Text('This will delete it permanently.'),
                             actions: <Widget>[
                               TextButton(
-                                child: Text('Cancel'),
+                                child: Text(S.current.Cancel),
                                 onPressed: () {
                                   Navigator.of(context).pop(false);
                                 },
                               ),
                               TextButton(
-                                child: Text('Delete'),
+                                child: Text(S.current.Delete),
                                 onPressed: () {
                                   Navigator.of(context).pop(true);
                                 },
@@ -352,13 +352,13 @@ class _NoteListPageState extends State<NoteListPage> {
             },
           ),
           SlidableAction(
-            label: 'Restore',
+            label: S.current.Restore,
             backgroundColor: Colors.redAccent,
             icon: MdiIcons.deleteRestore,
             onPressed: (context) async {
               note.deleted = false;
 
-              PersistentStore.saveNote(note);
+              PersistentStore.saveNoteHeader(note);
 
               await _filterAndSortNotes();
             },
@@ -366,13 +366,13 @@ class _NoteListPageState extends State<NoteListPage> {
         ],
         if (!note.deleted)
           SlidableAction(
-            label: 'Trash',
+            label: S.current.Trash,
             backgroundColor: Colors.red,
             icon: Icons.delete,
             onPressed: (context) async {
               note.deleted = true;
 
-              PersistentStore.saveNote(note);
+              PersistentStore.saveNoteHeader(note);
 
               await _filterAndSortNotes();
             },
@@ -381,25 +381,25 @@ class _NoteListPageState extends State<NoteListPage> {
       endActionPane:
           ActionPane(motion: const DrawerMotion(), children: <Widget>[
         SlidableAction(
-          label: note.favorite ? 'Unstar' : 'Star',
+          label: note.favorite ? S.current.Unfavorite : S.current.Favorite,
           backgroundColor: Colors.yellow,
           icon: note.favorite ? MdiIcons.starOff : MdiIcons.star,
           onPressed: (context) async {
             note.favorite = !note.favorite;
 
-            PersistentStore.saveNote(note);
+            PersistentStore.saveNoteHeader(note);
 
             await _filterAndSortNotes();
           },
         ),
         SlidableAction(
-          label: note.pinned ? 'Unpin' : 'Pin',
+          label: note.pinned ? S.current.Unpin : S.current.Pin,
           backgroundColor: Colors.green,
           icon: note.pinned ? MdiIcons.pinOff : MdiIcons.pin,
           onPressed: (context) async {
             note.pinned = !note.pinned;
 
-            PersistentStore.saveNote(note);
+            PersistentStore.saveNoteHeader(note);
 
             await _filterAndSortNotes();
           },
@@ -418,8 +418,10 @@ class _NoteListPageState extends State<NoteListPage> {
           children: <Widget>[
             if (note.pinned) Icon(MdiIcons.pin),
             if (note.favorite) Icon(MdiIcons.star),
-            if (note.encrypted)note.isDecryptSuccess?
-              Icon(MdiIcons.lockOpen):Icon(MdiIcons.lock),
+            if (note.encrypted)
+              note.isDecryptSuccess
+                  ? Icon(MdiIcons.lockOpen)
+                  : Icon(MdiIcons.lock),
             // if (note.encrypted && note.isDecryptSuccess)
             //   Icon(MdiIcons.lockOpen),
             // if (note.encrypted && !note.isDecryptSuccess) Icon(MdiIcons.lock),
@@ -466,15 +468,15 @@ class _NoteListPageState extends State<NoteListPage> {
             String pwd = await showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: Text('Enter password'),
+                    title: Text(S.current.Enter_password),
                     content: TextField(
                       controller: ctrl,
                       autofocus: true,
                       readOnly: !canRetry,
                       decoration: InputDecoration(
                         hintText: canRetry
-                            ? 'Enter password'
-                            : 'Please try again in ${cd} second(s)',
+                            ? S.current.Enter_password
+                            : S.current.Please_try_again_in_cd_second(cd),
                       ),
                       onSubmitted: (str) {
                         Navigator.of(context).pop(str);
@@ -482,13 +484,13 @@ class _NoteListPageState extends State<NoteListPage> {
                     ),
                     actions: <Widget>[
                       TextButton(
-                        child: Text('Cancel'),
+                        child: Text(S.current.Cancel),
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
                       ),
                       TextButton(
-                        child: Text('Confirm'),
+                        child: Text(S.current.Confirm),
                         onPressed: canRetry
                             ? () => Navigator.of(context).pop(ctrl.text)
                             : null,
@@ -539,14 +541,13 @@ class _NoteListPageState extends State<NoteListPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                      '${_selectedNotes.length} note${_selectedNotes.length > 1 ? 's' : ''} selected'),
+                  Text(S.current.countSelectedNotes(_selectedNotes.length)),
                   Row(
                     children: <Widget>[
                       InkWell(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-                          child: Text('ALL',
+                          child: Text(S.current.ALL,
                               style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                         onTap: () {
@@ -559,7 +560,7 @@ class _NoteListPageState extends State<NoteListPage> {
                       InkWell(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-                          child: Text('NONE',
+                          child: Text(S.current.NONE,
                               style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                         onTap: () {
@@ -575,262 +576,269 @@ class _NoteListPageState extends State<NoteListPage> {
               ),
             ),
             IconButton(
-              icon: Icon(MdiIcons.star),
-              onPressed: () {
-                showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                          title: Text('Favorite'),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              children: <Widget>[
-                                ListTile(
-                                  leading: Icon(MdiIcons.star),
-                                  title: Text('Favorite selected'),
-                                  onTap: () => _modifyAll((Note note) async {
-                                    note.favorite = true;
-
-                                    PersistentStore.saveNote(note);
-                                  }),
-                                ),
-                                ListTile(
-                                  leading: Icon(MdiIcons.starOff),
-                                  title: Text('Unfavorite selected'),
-                                  onTap: () => _modifyAll((Note note) async {
-                                    note.favorite = false;
-                                    PersistentStore.saveNote(note);
-                                  }),
-                                )
-                              ],
-                            ),
-                          ),
-                        ));
-              },
-            ),
-            IconButton(
               icon: Icon(MdiIcons.pin),
               onPressed: () {
                 showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                          title: Text('Pin'),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              children: <Widget>[
-                                ListTile(
-                                  leading: Icon(MdiIcons.pin),
-                                  title: Text('Pin selected'),
-                                  onTap: () => _modifyAll((Note note) async {
-                                    note.pinned = true;
-                                    PersistentStore.saveNote(note);
-                                  }),
-                                ),
-                                ListTile(
-                                  leading: Icon(MdiIcons.pinOff),
-                                  title: Text('Unpin selected'),
-                                  onTap: () => _modifyAll((Note note) async {
-                                    note.pinned = false;
-                                    PersistentStore.saveNote(note);
-                                  }),
-                                )
-                              ],
-                            ),
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(S.current.Pin),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          ListTile(
+                            leading: Icon(MdiIcons.pin),
+                            title: Text(S.current.Pin_selected),
+                            onTap: () => _modifyAll((Note note) async {
+                              note.pinned = true;
+                              PersistentStore.saveNoteHeader(note);
+                            }),
                           ),
-                        ));
+                          ListTile(
+                            leading: Icon(MdiIcons.pinOff),
+                            title: Text(S.current.Unpin_selected),
+                            onTap: () => _modifyAll(
+                              (Note note) async {
+                                note.pinned = false;
+                                PersistentStore.saveNoteHeader(note);
+                              },
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              icon: Icon(MdiIcons.star),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(S.current.Favorite),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          ListTile(
+                            leading: Icon(MdiIcons.star),
+                            title: Text(S.current.Favorite_selected),
+                            onTap: () => _modifyAll((Note note) async {
+                              note.favorite = true;
+
+                              PersistentStore.saveNoteHeader(note);
+                            }),
+                          ),
+                          ListTile(
+                            leading: Icon(MdiIcons.starOff),
+                            title: Text(S.current.Unfavorite_selected),
+                            onTap: () => _modifyAll(
+                              (Note note) async {
+                                note.favorite = false;
+                                PersistentStore.saveNoteHeader(note);
+                              },
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                );
               },
             ),
             IconButton(
               icon: Icon(MdiIcons.tag),
               onPressed: () {
                 showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                          title: Text('Tags'),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              children: <Widget>[
-                                ListTile(
-                                  leading: Icon(MdiIcons.tagPlus),
-                                  title: Text('Add Tag to selected notes'),
-                                  onTap: () async {
-                                    /*
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(S.current.Tags),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          ListTile(
+                            leading: Icon(MdiIcons.tagPlus),
+                            title: Text(S.current.Add_Tag_to_selected_notes),
+                            onTap: () async {
+                              /*
                                                     Navigator.of(context).pop(); */
-                                    TextEditingController ctrl =
-                                        TextEditingController();
-                                    String newTag = await showDialog(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                            title: Text('Add Tag'),
-                                            content: TextField(
-                                              controller: ctrl,
-                                              autofocus: true,
-                                              onSubmitted: (str) {
-                                                Navigator.of(context).pop(str);
-                                              },
-                                            ),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                child: Text('Cancel'),
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                              TextButton(
-                                                child: Text('Add'),
-                                                onPressed: () {
-                                                  Navigator.of(context)
-                                                      .pop(ctrl.text);
-                                                },
-                                              ),
+                              TextEditingController ctrl =
+                                  TextEditingController();
+                              String newTag = await showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(S.current.Add_Tag),
+                                      content: TextField(
+                                        controller: ctrl,
+                                        autofocus: true,
+                                        onSubmitted: (str) {
+                                          Navigator.of(context).pop(str);
+                                        },
+                                      ),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          child: Text(S.current.Cancel),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text(S.current.Add),
+                                          onPressed: () {
+                                            Navigator.of(context)
+                                                .pop(ctrl.text);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ) ??
+                                  '';
+
+                              if (newTag.isNotEmpty) {
+                                print('ADD');
+                                await _modifyAll((Note note) async {
+                                  note.tags.add(newTag);
+                                  PersistentStore.saveNoteHeader(note);
+                                });
+                                store.updateTagList();
+                              } else {
+                                /* Navigator.of(context)
+                                                          .pop(); */
+                              }
+                            },
+                          ),
+                          ListTile(
+                            leading: Icon(MdiIcons.tagMinus),
+                            title:
+                                Text(S.current.Remove_Tag_from_selected_notes),
+                            onTap: () async {
+                              Set<String> tags = {};
+
+                              for (String title in _selectedNotes) {
+                                Note note = store.getNote(title);
+                                tags.addAll(note.tags);
+                              }
+
+                              String tagToRemove = await showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                        title: Text(
+                                            S.current.Choose_Tag_to_remove),
+                                        content: SingleChildScrollView(
+                                          child: Column(
+                                            children: <Widget>[
+                                              for (String tag in tags)
+                                                ListTile(
+                                                    title: Text(tag),
+                                                    onTap: () {
+                                                      Navigator.of(context)
+                                                          .pop(tag);
+                                                    })
                                             ],
                                           ),
-                                        ) ??
-                                        '';
-
-                                    if (newTag.isNotEmpty) {
-                                      print('ADD');
-                                      await _modifyAll((Note note) async {
-                                        note.tags.add(newTag);
-                                        PersistentStore.saveNote(note);
-                                      });
-                                      store.updateTagList();
-                                    } else {
-                                      /* Navigator.of(context)
-                                                          .pop(); */
-                                    }
+                                        ),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            child: Text(S.current.Cancel),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                        ],
+                                      ));
+                              if (tagToRemove.isNotEmpty) {
+                                // print('REMOVE');
+                                await _modifyAll(
+                                  (Note note) async {
+                                    note.tags.remove(tagToRemove);
+                                    PersistentStore.saveNoteHeader(note);
                                   },
-                                ),
-                                ListTile(
-                                  leading: Icon(MdiIcons.tagMinus),
-                                  title: Text('Remove Tag from selected notes'),
-                                  onTap: () async {
-                                    Set<String> tags = {};
-
-                                    for (String title in _selectedNotes) {
-                                      Note note = store.getNote(title);
-                                      tags.addAll(note.tags);
-                                    }
-
-                                    String tagToRemove = await showDialog(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                              title:
-                                                  Text('Choose Tag to remove'),
-                                              content: SingleChildScrollView(
-                                                child: Column(
-                                                  children: <Widget>[
-                                                    for (String tag in tags)
-                                                      ListTile(
-                                                          title: Text(tag),
-                                                          onTap: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop(tag);
-                                                          })
-                                                  ],
-                                                ),
-                                              ),
-                                              actions: <Widget>[
-                                                TextButton(
-                                                  child: Text('Cancel'),
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                ),
-                                              ],
-                                            ));
-                                    if (tagToRemove.isNotEmpty) {
-                                      print('REMOVE');
-                                      await _modifyAll((Note note) async {
-                                        note.tags.remove(tagToRemove);
-                                        PersistentStore.saveNote(note);
-                                      });
-                                      store.updateTagList();
-                                    }
-                                    /*                      _modifyAll(
-                                                      (Note note) async {
-                                                    note.pinned = false;
-                                                    PersistentStore.saveNote(
-                                                        note);
-                                                  }) */
-                                  },
-                                )
-                              ],
-                            ),
-                          ),
-                        ));
+                                );
+                                store.updateTagList();
+                              }
+                            },
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                );
               },
             ),
             IconButton(
               icon: Icon(MdiIcons.delete),
               onPressed: () {
                 showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                          title: Text('Delete selected'),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              children: <Widget>[
-                                ListTile(
-                                  leading: Icon(MdiIcons.delete),
-                                  title: Text('Move to trash'),
-                                  onTap: () => _modifyAll((Note note) {
-                                    note.deleted = true;
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(S.current.Delete_selected),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          ListTile(
+                            leading: Icon(MdiIcons.delete),
+                            title: Text(S.current.Move_to_trash),
+                            onTap: () => _modifyAll((Note note) {
+                              note.deleted = true;
 
-                                    PersistentStore.saveNote(note);
-                                  }),
-                                ),
-                                ListTile(
-                                  leading: Icon(MdiIcons.deleteRestore),
-                                  title: Text('Restore from trash'),
-                                  onTap: () => _modifyAll((Note note) {
-                                    note.deleted = false;
-
-                                    PersistentStore.saveNote(note);
-                                  }),
-                                ),
-                                ListTile(
-                                    leading: Icon(MdiIcons.deleteForever),
-                                    title: Text('Delete forever'),
-                                    onTap: () async {
-                                      bool isDelete = await showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                    title: Text(
-                                                        'Do you really want to delete the selected notes?'),
-                                                    content: Text(
-                                                        'This will delete them permanently.'),
-                                                    actions: <Widget>[
-                                                      TextButton(
-                                                        child: Text('Cancel'),
-                                                        onPressed: () {
-                                                          Navigator.of(context)
-                                                              .pop(false);
-                                                        },
-                                                      ),
-                                                      TextButton(
-                                                        child: Text('Delete'),
-                                                        onPressed: () {
-                                                          Navigator.of(context)
-                                                              .pop(true);
-                                                        },
-                                                      )
-                                                    ],
-                                                  )) ??
-                                          false;
-                                      if (isDelete) {
-                                        await _modifyAll((Note note) {
-                                          store.allNotes.remove(note);
-
-                                          PersistentStore.deleteNote(note);
-                                          _selectedNotes.remove(note.title);
-                                        });
-                                      }
-                                    })
-                              ],
-                            ),
+                              PersistentStore.saveNoteHeader(note);
+                            }),
                           ),
-                        ));
+                          ListTile(
+                            leading: Icon(MdiIcons.deleteRestore),
+                            title: Text(S.current.Restore_from_trash),
+                            onTap: () => _modifyAll((Note note) {
+                              note.deleted = false;
+
+                              PersistentStore.saveNoteHeader(note);
+                            }),
+                          ),
+                          ListTile(
+                            leading: Icon(MdiIcons.deleteForever),
+                            title: Text(S.current.Delete_forever),
+                            onTap: () async {
+                              bool isDelete = await showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                            title: Text(S.current
+                                                .Do_you_really_want_to_delete_the_selected_notes),
+                                            content: Text(S.current
+                                                .This_will_delete_them_permanently),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                child: Text(S.current.Cancel),
+                                                onPressed: () {
+                                                  Navigator.of(context)
+                                                      .pop(false);
+                                                },
+                                              ),
+                                              TextButton(
+                                                child: Text(S.current.Delete),
+                                                onPressed: () {
+                                                  Navigator.of(context)
+                                                      .pop(true);
+                                                },
+                                              )
+                                            ],
+                                          )) ??
+                                  false;
+                              if (isDelete) {
+                                await _modifyAll(
+                                  (Note note) {
+                                    store.allNotes.remove(note);
+
+                                    PersistentStore.deleteNote(note);
+                                    _selectedNotes.remove(note.title);
+                                  },
+                                );
+                              }
+                            },
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                );
               },
             ),
           ],
@@ -854,7 +862,7 @@ class _NoteListPageState extends State<NoteListPage> {
               //     return Text('${info?.appName} ${info?.version}');
               //   },
               // ),
-              title: Text('${appName} ${appInfo.package.version}'),
+              title: Text('${ca.appName} ${appInfo.package.version}'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -885,7 +893,7 @@ class _NoteListPageState extends State<NoteListPage> {
               _filterAndSortNotes();
             },
             icon: MdiIcons.noteText,
-            displayTag: 'All Notes',
+            displayTag: S.current.All_Notes,
             hasSubTags: false,
           ),
           TagDropdown(
@@ -896,13 +904,14 @@ class _NoteListPageState extends State<NoteListPage> {
               _filterAndSortNotes();
             },
             icon: MdiIcons.star,
+            displayTag: S.current.Favorite,
             hasSubTags: false,
           ),
           for (String tag in store.rootTags)
             TagDropdown(
               tag,
-              store /*
-                        store.allTags.where((t) => t.startsWith(tag)).toList() */
+              store
+              //  store.allTags.where((t) => t.startsWith(tag)).toList()
               ,
               () {
                 Navigator.of(context).pop();
@@ -918,6 +927,7 @@ class _NoteListPageState extends State<NoteListPage> {
               _filterAndSortNotes();
             },
             icon: MdiIcons.labelOff,
+            displayTag: S.current.Untagged,
             hasSubTags: false,
           ),
           TagDropdown(
@@ -928,6 +938,7 @@ class _NoteListPageState extends State<NoteListPage> {
               _filterAndSortNotes();
             },
             icon: Icons.delete,
+            displayTag: S.current.Trash,
           ),
         ],
       ),
@@ -960,37 +971,6 @@ class _NoteListPageState extends State<NoteListPage> {
   // }
 
   ///
-  // Future<bool> _onWillPop() async {
-  //   if (_selectedNotes.isNotEmpty) {
-  //     setState(() {
-  //       _selectedNotes = {};
-  //     });
-  //     return false;
-  //   }
-  //   if (!widget.isFirstPage) return true;
-  //   return await showDialog(
-  //           context: context,
-  //           builder: (context) => AlertDialog(
-  //                 title: Text('Do you want to exit the app?'),
-  //                 actions: <Widget>[
-  //                   TextButton(
-  //                     child: Text('Cancel'),
-  //                     onPressed: () {
-  //                       Navigator.of(context).pop(false);
-  //                     },
-  //                   ),
-  //                   TextButton(
-  //                     child: Text('Exit'),
-  //                     onPressed: () {
-  //                       Navigator.of(context).pop(true);
-  //                     },
-  //                   )
-  //                 ],
-  //               )) ??
-  //       false;
-  // }
-
-  ///
   void _deselectAllNotes() {
     if (_selectedNotes.isNotEmpty) {
       setState(() {
@@ -1016,16 +996,16 @@ class _NoteListPageState extends State<NoteListPage> {
       shouldPop = await showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                    title: Text('Do you want to exit the app?'),
+                    title: Text(S.current.Do_you_want_to_exit_the_app),
                     actions: <Widget>[
                       TextButton(
-                        child: Text('Cancel'),
+                        child: Text(S.current.Cancel),
                         onPressed: () {
                           Navigator.of(context).pop(false);
                         },
                       ),
                       TextButton(
-                        child: Text('Exit'),
+                        child: Text(S.current.Exit),
                         onPressed: () {
                           Navigator.of(context).pop(true);
                         },
@@ -1084,11 +1064,11 @@ class _NoteListPageState extends State<NoteListPage> {
         showDialog(
             context: context,
             builder: (context) => AlertDialog(
-                  title: Text('Sync Error'),
+                  title: Text(S.current.Sync_Error),
                   content: Text(result),
                   actions: <Widget>[
                     TextButton(
-                      child: Text('Ok'),
+                      child: Text(S.current.Ok),
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
@@ -1114,49 +1094,11 @@ class _NoteListPageState extends State<NoteListPage> {
 
   ///
   Future<void> _createNewNote([String content = '']) async {
-    Note newNote = Note();
-    int i = 1;
-    while (true) {
-      String title = 'Untitled';
-      if (i > 1) title += ' ($i)';
-
-      bool exists = false;
-
-      for (Note note in store.allNotes) {
-        if (title == note.title) {
-          exists = true;
-          break;
-        }
-      }
-
-      if (!exists) {
-        newNote.title = title;
-        break;
-      }
-
-      i++;
-    }
-
-    if (store.isDendronMode) {
-      newNote.isMillisecond = true;
-      newNote.idUpdatedInsteadOfModified = true;
-      newNote.header = {
-        'id': Uuid().v4(),
-        'desc': '',
-      };
-    }
-
-    newNote.created = DateTime.now();
-    newNote.modified = newNote.created;
-
-    newNote.file = File('${store.notesDir.path}/${newNote.title}.md');
-    store.allNotes.add(newNote);
+    Note newNote = await store.createNewNote(content);
 
     _filterAndSortNotes();
 
-    PrefService.setBool('editor_mode_switcher_is_preview', false);
-
-    await PersistentStore.saveNote(newNote, '# ${newNote.title}\n\n$content');
+    PrefService.setBool(ca.isPreviewMode, false);
 
     await Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => EditPage(
@@ -1164,7 +1106,7 @@ class _NoteListPageState extends State<NoteListPage> {
               store,
               autofocus: true,
             )));
-    _filterAndSortNotes();
+    // _filterAndSortNotes();
   }
 
   /* _setFilterTagAndRefresh(BuildContext context, String tag) {

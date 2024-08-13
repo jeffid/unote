@@ -22,6 +22,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   flutter_markdown: ^0.7.3
   flutter_slidable: ^3.1.0
   # webview_flutter: ^3.0.4
@@ -41,12 +43,11 @@ dependencies:
   quick_actions: ^1.0.7
   receive_sharing_intent: ^1.8.0
   quiver: ^3.2.1
-  # intl: ^0.19.0
-  intl: ^0.18.0
+  intl: ^0.19.0
+  intl_utils: ^2.8.7
   permission_handler: ^11.3.1
   uuid: ^4.4.0
   logger: ^2.3.0
-  webview_all: ^0.4.1
   shared_preferences: 2.2.0
   markdown_toolbar: ^0.5.0
   markdown_widget: ^2.3.2+6
@@ -55,15 +56,15 @@ dependencies:
   cryptography_flutter: ^2.3.2
 
   flutter_app_info:
-     git: git@github.com:inote-flutter/flutter_app_info
+    git: git@github.com:inote-flutter/flutter_app_info
   preferences:
-  #  preferences: ^5.2.0
+    #  preferences: ^5.2.0
     git: git@github.com:inote-flutter/preferences
   bsdiff:
-  #  bsdiff: ^0.1.0
+    #  bsdiff: ^0.1.0
     git: git@github.com:inote-flutter/bsdiff
   front_matter:
-  #  front_matter: ^1.1.0
+    #  front_matter: ^1.1.0
     git: git@github.com:inote-flutter/front_matter
   markd:
     #    git: https://github.com/redsolver/markd.git
@@ -75,10 +76,11 @@ dependencies:
     git: git@github.com:inote-flutter/rich_text_controller
 
 dependency_overrides:
-# #  shared_preferences: ^2.0.4
+  #  shared_preferences: ^2.0.4
   device_info_plus: ^9.1.0
+  analyzer: ^6.0.0
 
-# dev_dependencies:
+dev_dependencies:
 # flutter_launcher_icons: ^0.8.1
 
 flutter_icons:
@@ -88,6 +90,7 @@ flutter_icons:
   image_path_ios: "assets/icon/icon-512.png"
   adaptive_icon_background: "#ffffff"
   adaptive_icon_foreground: "assets/icon/icon-1000.png"
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 # The following section is specific to Flutter.
@@ -131,3 +134,6 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+flutter_intl:
+  enabled: true
