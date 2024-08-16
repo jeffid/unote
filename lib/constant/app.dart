@@ -31,9 +31,9 @@ const String canSearchContent = 'can_search_content';
 // Editor page
 const String canShowModeSwitcher = 'can_show_mode_switcher';
 const String isPreviewMode = 'is_preview_mode';
-const String camPairMark = 'can_pair_mark';
 const String canAutoSave = 'can_auto_save';
-const String canAutoBulletMark = 'can_auto_bullet_mark';
+const String canPairMark = 'can_pair_mark';
+const String canAutoListMark = 'can_auto_list_mark';
 // tag
 const String currentTag = 'current_tag';
 const String canShowVirtualTags = 'can_show_virtual_tags';

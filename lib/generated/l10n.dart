@@ -510,11 +510,21 @@ class S {
     );
   }
 
-  /// `Enter password`
-  String get Enter_password {
+  /// `Enter Password`
+  String get Enter_Password {
     return Intl.message(
-      'Enter password',
-      name: 'Enter_password',
+      'Enter Password',
+      name: 'Enter_Password',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Set a password for the current document ( The password cannot be retrieved)`
+  String get Set_Password {
+    return Intl.message(
+      'Set a password for the current document ( The password cannot be retrieved)',
+      name: 'Set_Password',
       desc: '',
       args: [],
     );
@@ -920,21 +930,21 @@ class S {
     );
   }
 
-  /// `Automatic bullet points`
-  String get Automatic_bullet_points {
+  /// `Automatic list line mark`
+  String get Automatic_list_mark {
     return Intl.message(
-      'Automatic bullet points',
-      name: 'Automatic_bullet_points',
+      'Automatic list line mark',
+      name: 'Automatic_list_mark',
       desc: '',
       args: [],
     );
   }
 
-  /// `Adds a bullet point to a new line if the line before it had one`
-  String get Adds_a_bullet_point_to_a_new_line_if_the_line_before_it_had_one {
+  /// `Adds a list mark to a new line if the line before it had one`
+  String get Adds_a_list_mark_to_a_new_line_if_the_line_before_it_had_one {
     return Intl.message(
-      'Adds a bullet point to a new line if the line before it had one',
-      name: 'Adds_a_bullet_point_to_a_new_line_if_the_line_before_it_had_one',
+      'Adds a list mark to a new line if the line before it had one',
+      name: 'Adds_a_list_mark_to_a_new_line_if_the_line_before_it_had_one',
       desc: '',
       args: [],
     );

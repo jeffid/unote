@@ -33,10 +33,11 @@ class _SettingsPageState extends State<SettingsPage> {
       ca.theme: ThemeType.light.name,
       ca.canSearchContent: true,
       ca.canShowModeSwitcher: true,
-      ca.camPairMark: false,
+      ca.canPairMark: false,
       ca.canAutoSave: false,
       ca.canShowVirtualTags: false,
       ca.isSortTags: true,
+      ca.canAutoListMark: true,
       ca.isDendronMode: false,
       ca.debugLogsSync: false,
     });
@@ -260,7 +261,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         SwitchPreference(
           S.current.Pair_Quotes,
-          ca.camPairMark,
+          ca.canPairMark,
           activeColor: accentColor,
           inactiveThumbColor: accentColor,
         ),
@@ -335,10 +336,10 @@ class _SettingsPageState extends State<SettingsPage> {
           inactiveThumbColor: accentColor,
         ),
         SwitchPreference(
-          S.current.Automatic_bullet_points,
-          ca.canAutoBulletMark,
+          S.current.Automatic_list_mark,
+          ca.canAutoListMark,
           desc: S.current
-              .Adds_a_bullet_point_to_a_new_line_if_the_line_before_it_had_one,
+              .Adds_a_list_mark_to_a_new_line_if_the_line_before_it_had_one,
           activeColor: accentColor,
           inactiveThumbColor: accentColor,
         ),

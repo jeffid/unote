@@ -41,16 +41,16 @@ class MessageLookup extends MessageLookupByLibrary {
         "Add_Tag": MessageLookupByLibrary.simpleMessage("Add Tag"),
         "Add_Tag_to_selected_notes":
             MessageLookupByLibrary.simpleMessage("Add Tag to selected notes"),
-        "Adds_a_bullet_point_to_a_new_line_if_the_line_before_it_had_one":
+        "Adds_a_list_mark_to_a_new_line_if_the_line_before_it_had_one":
             MessageLookupByLibrary.simpleMessage(
-                "Adds a bullet point to a new line if the line before it had one"),
+                "Adds a list mark to a new line if the line before it had one"),
         "Adds_a_virtual_tag_to_notes_which_are_in_a_subdirectory":
             MessageLookupByLibrary.simpleMessage(
                 "Adds a virtual tag (#/path) to notes which are in a subdirectory"),
         "All_Notes": MessageLookupByLibrary.simpleMessage("All Notes"),
         "Auto_Save": MessageLookupByLibrary.simpleMessage("Auto Save"),
-        "Automatic_bullet_points":
-            MessageLookupByLibrary.simpleMessage("Automatic bullet points"),
+        "Automatic_list_mark":
+            MessageLookupByLibrary.simpleMessage("Automatic list line mark"),
         "Back": MessageLookupByLibrary.simpleMessage("Back"),
         "Black_AMOLED": MessageLookupByLibrary.simpleMessage("Black / AMOLED"),
         "Cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
@@ -92,8 +92,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "Enable_Dendron_support":
             MessageLookupByLibrary.simpleMessage("Enable Dendron support"),
         "Encrypt": MessageLookupByLibrary.simpleMessage("Encrypt"),
-        "Enter_password":
-            MessageLookupByLibrary.simpleMessage("Enter password"),
+        "Enter_Password":
+            MessageLookupByLibrary.simpleMessage("Enter Password"),
         "Exit": MessageLookupByLibrary.simpleMessage("Exit"),
         "Experimental": MessageLookupByLibrary.simpleMessage("Experimental"),
         "Favorite": MessageLookupByLibrary.simpleMessage("Favorite"),
@@ -132,6 +132,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Search content of notes"),
         "Select_accent_color":
             MessageLookupByLibrary.simpleMessage("Select accent color"),
+        "Set_Password": MessageLookupByLibrary.simpleMessage(
+            "Set a password for the current document ( The password cannot be retrieved)"),
         "Settings": MessageLookupByLibrary.simpleMessage("Settings"),
         "Show_virtual_tags":
             MessageLookupByLibrary.simpleMessage("Show virtual tags"),

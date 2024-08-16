@@ -38,14 +38,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "Add_Tag": MessageLookupByLibrary.simpleMessage("添加标签"),
         "Add_Tag_to_selected_notes":
             MessageLookupByLibrary.simpleMessage("添加标签到选中文档"),
-        "Adds_a_bullet_point_to_a_new_line_if_the_line_before_it_had_one":
-            MessageLookupByLibrary.simpleMessage("自动在无序列表的新一行开头添加序列符号"),
+        "Adds_a_list_mark_to_a_new_line_if_the_line_before_it_had_one":
+            MessageLookupByLibrary.simpleMessage("自动在列表的新一行开头添加序列符号"),
         "Adds_a_virtual_tag_to_notes_which_are_in_a_subdirectory":
             MessageLookupByLibrary.simpleMessage("以子文件夹名作为虚拟标签"),
         "All_Notes": MessageLookupByLibrary.simpleMessage("全部文档"),
         "Auto_Save": MessageLookupByLibrary.simpleMessage("自动保存"),
-        "Automatic_bullet_points":
-            MessageLookupByLibrary.simpleMessage("自动添加序列符号"),
+        "Automatic_list_mark": MessageLookupByLibrary.simpleMessage("自动添加序列符号"),
         "Back": MessageLookupByLibrary.simpleMessage("返回"),
         "Black_AMOLED": MessageLookupByLibrary.simpleMessage("黑色 / AMOLED"),
         "Cancel": MessageLookupByLibrary.simpleMessage("取消"),
@@ -77,7 +76,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Enable_Dendron_support":
             MessageLookupByLibrary.simpleMessage("支持 Dendron 模式"),
         "Encrypt": MessageLookupByLibrary.simpleMessage("加密"),
-        "Enter_password": MessageLookupByLibrary.simpleMessage("输入密码"),
+        "Enter_Password": MessageLookupByLibrary.simpleMessage("输入密码"),
         "Exit": MessageLookupByLibrary.simpleMessage("退出"),
         "Experimental": MessageLookupByLibrary.simpleMessage("试验"),
         "Favorite": MessageLookupByLibrary.simpleMessage("收藏"),
@@ -111,6 +110,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "Search_content_of_notes":
             MessageLookupByLibrary.simpleMessage("搜索包含文档内容"),
         "Select_accent_color": MessageLookupByLibrary.simpleMessage("选择强调色"),
+        "Set_Password":
+            MessageLookupByLibrary.simpleMessage("为当前文档设置密码（该密码不可找回！）"),
         "Settings": MessageLookupByLibrary.simpleMessage("设置"),
         "Show_virtual_tags":
             MessageLookupByLibrary.simpleMessage("Show virtual tags"),

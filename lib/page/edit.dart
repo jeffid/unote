@@ -17,8 +17,9 @@ import 'package:rich_text_controller/rich_text_controller.dart';
 // import 'package:markdown_toolbar/markdown_toolbar.dart';
 
 import '/constant/app.dart' as ca;
-import '/main.dart';
+import '/editor/character_pair.dart';
 import '/generated/l10n.dart';
+import '/main.dart';
 import '/model/note.dart';
 import '/store/encryption.dart';
 import '/store/notes.dart';
@@ -47,6 +48,8 @@ class _EditPageState extends State<EditPage> {
   late Note note;
 
   String currentData = '';
+
+  TextEditingValue? _oldVal;
 
   List<Uint8List> history = [];
 
@@ -155,8 +158,7 @@ class _EditPageState extends State<EditPage> {
                           ),
                           textInputAction: TextInputAction.none,
                           onSubmitted: (value) {
-                            _editCtrl.value = _onEnterPress(
-                                _editCtrl.text, _editCtrl.selection.start);
+                            _editCtrl.value = _onEnterPress(_editCtrl.value);
                           },
                         ),
                       ),
@@ -340,7 +342,7 @@ class _EditPageState extends State<EditPage> {
                 SizedBox(
                   width: 8,
                 ),
-                Text('Add Attachment'),
+                Text(S.current.Add_Attachment),
               ],
             ),
           ),
@@ -396,7 +398,7 @@ class _EditPageState extends State<EditPage> {
               String pwd = await showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: Text(S.current.Enter_password),
+                      title: Text(S.current.Set_Password),
                       content: TextField(
                         controller: ctrl,
                         autofocus: true,
@@ -427,6 +429,7 @@ class _EditPageState extends State<EditPage> {
                 break;
               } else {
                 note.encryption = Encryption(key: pwd);
+                note.isDecryptSuccess = true;
               }
             } else {
               // Disable encryption
@@ -787,7 +790,7 @@ class _EditPageState extends State<EditPage> {
       onMatch: (List<String> matches) {
         // Do something with matches.
         // as long as you're typing, the controller will keep updating the list.
-        logger.d(matches);
+        // logger.d(matches);
       },
       deleteOnBack: true,
       // You can control the [RegExp] options used:
@@ -796,14 +799,38 @@ class _EditPageState extends State<EditPage> {
 
     //
     _editCtrl.addListener(() {
-      if (_editCtrl.text == currentData) return;
+      // logger.d((
+      //   'listening',
+      //   now(),
+      //   _oldVal != null ? _oldVal!.selection.start : '--1',
+      //   _editCtrl.selection.start >= 0
+      //       ? _editCtrl.text
+      //           .substring(_editCtrl.selection.start, _editCtrl.selection.end)
+      //       : '--1'
+      // ));
+
+      if (_oldVal == null || _oldVal!.text == _editCtrl.text) {
+        _oldVal = _editCtrl.value; // update selection
+        return;
+      }
+
+      if (_editCtrl.selection.start >= 0 &&
+          (PrefService.getBool(ca.canPairMark) ?? false)) {
+        final TextEditingValue val =
+            CharacterPair().formatEditUpdate(_oldVal!, _editCtrl.value);
+        if (_editCtrl.text != val.text) {
+          _oldVal = val; // must before trigger
+          _editCtrl.value = val; // update value will trigger listener
+        }
+      }
+      _oldVal = _editCtrl.value;
 
       Uint8List diff =
           bsdiff(utf8.encode(_editCtrl.text), utf8.encode(currentData));
-      logger.d((
-        'ctrl Listener',
-        diff,
-      ));
+      // logger.d((
+      //   'ctrl Listener diff',
+      //   diff,
+      // ));
       int cursorPosition = max(
           0,
           _editCtrl.text.length > currentData.length
@@ -892,7 +919,7 @@ class _EditPageState extends State<EditPage> {
           break;
         }
       } else {
-        // compleleted read content
+        // completed read content
         break;
       }
     }
@@ -917,68 +944,81 @@ class _EditPageState extends State<EditPage> {
 
   /// [_onEnterPress]
   /// [cursorIdx] is selection.start
-  TextEditingValue _onEnterPress(String text, int cursorIdx) {
-    int offset = cursorIdx;
+  TextEditingValue _onEnterPress(TextEditingValue val) {
+    String text = val.text;
+    int cursorIdx = val.selection.start;
 
     // before part without CR(13) or LF(10) at end
     final String befPart = text.substring(0, cursorIdx);
 
-    String befLine = befPart.split('\n').last;
+    final String befLine = befPart.split('\n').last;
 
-    // list mark
-    RegExpMatch? match =
-        RegExp(r'^(\s*)([-\*]|\d+)(\.?)(\s+)(.*)$').firstMatch(befLine);
-    int spaceLen = 0;
-    String befLineWords = '';
-    String mark = '';
-    if (match != null) {
-      spaceLen = match[1]!.length;
-      befLineWords = match[5]!;
+    if (PrefService.getBool(ca.canAutoListMark) ?? false) {
+      // list mark
+      RegExpMatch? match =
+          RegExp(r'^(\s*)([-\*]|\d+)(\.?)(\s+)(.*)$').firstMatch(befLine);
+      int spaceLen = 0;
+      String befLineWords = '';
+      String mark = '';
+      if (match != null) {
+        spaceLen = match[1]!.length;
+        befLineWords = match[5]!;
 
-      mark = match[2]!;
-      int? markNum = num.tryParse(mark)?.toInt();
-      if (markNum != null && match[3]!.isNotEmpty) {
-        // increase list number
-        mark = (markNum + 1).toString() + '.';
+        mark = match[2]!;
+        int? markNum = num.tryParse(mark)?.toInt();
+        if (markNum != null && match[3]!.isNotEmpty) {
+          // increase list number
+          mark = (markNum + 1).toString() + '.';
+        }
+      }
+      int befLineLen = befLine.length; // (e.g., `  - 123`)
+      int befTextLen = befLineLen - spaceLen; // (e.g., `- 123`)
+
+      if (mark.isNotEmpty) {
+        if (befLineWords.isEmpty) {
+          if (spaceLen >= 2) {
+            // indent two spaces
+            int befTextStart = cursorIdx - befTextLen;
+            text = text.substring(0, befTextStart - 2) +
+                text.substring(befTextStart);
+            cursorIdx = cursorIdx - 2;
+          } else {
+            // delete empty list line (e.g., `- `)
+            int befLineStart = cursorIdx - befLineLen;
+            text = text.substring(0, befLineStart) + text.substring(cursorIdx);
+            cursorIdx = befLineStart;
+          }
+        } else {
+          // add new list line with mark at the start
+          if (spaceLen > 0) mark = List.filled(spaceLen, ' ').join() + mark;
+          mark = '\n$mark ';
+          text = befPart + mark + text.substring(cursorIdx);
+          cursorIdx = cursorIdx + mark.length;
+        }
       }
     }
-    int befLineLen = befLine.length;
-    int befTextLen = befLineLen - spaceLen;
 
-    if (mark.isNotEmpty) {
-      if (befLineWords.isEmpty) {
-        if (spaceLen >= 2) {
-          // indent two spaces
-          int befTextStart = cursorIdx - befTextLen;
-          text = text.substring(0, befTextStart - 2) +
-              text.substring(befTextStart);
-          offset = cursorIdx - 2;
-        } else {
-          // delete empty list line
-          int befLineStart = cursorIdx - befLineLen;
-          text = text.substring(0, befLineStart) + text.substring(cursorIdx);
-          offset = befLineStart;
-        }
-      } else {
-        // add new list line with mark at the start
-        if (spaceLen > 0) mark = List.filled(spaceLen, ' ').join() + mark;
-        mark = '\n$mark ';
-        text = befPart + mark + text.substring(cursorIdx);
-        offset = cursorIdx + mark.length;
-      }
-    } else {
+    if (cursorIdx == val.selection.start) {
+      // cursorIdx not changed
       // add new empty line
       text = befPart + '\n' + text.substring(cursorIdx);
-      offset = cursorIdx + 1;
+      cursorIdx = cursorIdx + 1;
     }
 
-    return TextEditingValue(
+    return val.copyWith(
       text: text,
-      composing: TextRange.empty,
       selection: TextSelection.fromPosition(
-        TextPosition(affinity: TextAffinity.upstream, offset: offset),
+        TextPosition(affinity: TextAffinity.upstream, offset: cursorIdx),
       ),
     );
+
+    // return TextEditingValue(
+    //   text: text,
+    //   composing: TextRange.empty,
+    //   selection: TextSelection.fromPosition(
+    //     TextPosition(affinity: TextAffinity.upstream, offset: cursorIdx),
+    //   ),
+    // );
   }
 
   ///

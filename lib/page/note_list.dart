@@ -468,14 +468,14 @@ class _NoteListPageState extends State<NoteListPage> {
             String pwd = await showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: Text(S.current.Enter_password),
+                    title: Text(S.current.Enter_Password),
                     content: TextField(
                       controller: ctrl,
                       autofocus: true,
                       readOnly: !canRetry,
                       decoration: InputDecoration(
                         hintText: canRetry
-                            ? S.current.Enter_password
+                            ? S.current.Enter_Password
                             : S.current.Please_try_again_in_cd_second(cd),
                       ),
                       onSubmitted: (str) {
