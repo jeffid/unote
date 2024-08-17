@@ -45,17 +45,17 @@ class EditPage extends StatefulWidget {
 ///
 class _EditPageState extends State<EditPage> {
   //
-  late Note note;
+  late Note _note;
 
-  String currentData = '';
+  String _oldText = '';
 
   TextEditingValue? _oldVal;
 
-  List<Uint8List> history = [];
+  List<Uint8List> _textHistory = [];
 
-  List<int> cursorHistory = [];
+  List<int> _cursorHistory = [];
 
-  int autoSaveCounter = 0;
+  int _autoSaveCounter = 0;
 
   bool _hasSaved = true;
 
@@ -73,12 +73,12 @@ class _EditPageState extends State<EditPage> {
 
   late TextSelection _textSelection;
 
-  NotesStore get store => widget.store;
+  NotesStore get _store => widget.store;
 
   ///
   @override
   void initState() {
-    note = widget.note;
+    _note = widget.note;
     _initEditCtrl();
 
     _loadContent();
@@ -171,22 +171,49 @@ class _EditPageState extends State<EditPage> {
   ///
   AppBar _appBar() {
     return AppBar(
-      title: store.isDendronMode
+      title: _store.isDendronMode
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Text(note.title),
+                Text(_note.title),
                 Text(
-                  note.file.path.substring(store.notesDir.path.length + 1),
+                  _note.file.path.substring(_store.notesDir.path.length + 1),
                   style: TextStyle(
                     fontSize: 12,
                   ),
                 )
               ],
             )
-          : Text(note.title),
+          : Text(_note.title),
       actions: <Widget>[
+        IconButton(
+          icon: Icon(
+            Icons.undo,
+            color: _textHistory.isEmpty ? Colors.grey : null,
+          ),
+          onPressed: () {
+            if (_textHistory.isEmpty) return;
+
+            final int pos = _cursorHistory.removeLast();
+            _oldText = utf8.decode(
+                bspatch(utf8.encode(_oldText), _textHistory.removeLast()));
+            _editCtrl.text = _oldText;
+            _editCtrl.selection =
+                TextSelection(baseOffset: pos, extentOffset: pos);
+            _focusNode.requestFocus();
+
+            if (PrefService.boolDefault(ca.canAutoSave)) {
+              _autosave();
+            } else if (_textHistory.isNotEmpty && _hasSaved) {
+              _hasSaved = false;
+            } else if (_textHistory.isEmpty && !_hasSaved) {
+              _hasSaved = true;
+            }
+            // _textHistory.isEmpty or _hasSaved changed
+            if (mounted) setState(() {});
+          },
+        ),
         if (!_hasSaved)
           IconButton(
             icon: Icon(Icons.save),
@@ -250,121 +277,55 @@ class _EditPageState extends State<EditPage> {
         _textSelection = _editCtrl.selection;
         return <PopupMenuEntry<String>>[
           PopupMenuItem<String>(
-            value: 'pin',
+            value: ca.menuPin,
             child: Row(
               children: <Widget>[
                 Icon(
-                  note.pinned ? MdiIcons.pinOff : MdiIcons.pin,
+                  _note.pinned ? MdiIcons.pinOff : MdiIcons.pin,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
                 SizedBox(
                   width: 8,
                 ),
-                Text(note.pinned ? S.current.Unpin : S.current.Pin),
+                Text(_note.pinned ? S.current.Unpin : S.current.Pin),
               ],
             ),
           ),
           PopupMenuItem<String>(
-            value: 'favorite',
+            value: ca.menuFavorite,
             child: Row(
               children: <Widget>[
                 Icon(
-                  note.favorite ? MdiIcons.starOff : MdiIcons.star,
+                  _note.favorite ? MdiIcons.starOff : MdiIcons.star,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
                 SizedBox(
                   width: 8,
                 ),
-                Text(note.favorite ? S.current.Unfavorite : S.current.Favorite),
+                Text(
+                    _note.favorite ? S.current.Unfavorite : S.current.Favorite),
               ],
             ),
           ),
           PopupMenuItem<String>(
-            value: 'encrypt',
+            value: ca.menuEncrypt,
             child: Row(
               children: <Widget>[
                 Icon(
-                  note.encrypted ? MdiIcons.lockOff : MdiIcons.lock,
+                  _note.encrypted ? MdiIcons.lockOff : MdiIcons.lock,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
                 SizedBox(
                   width: 8,
                 ),
-                Text(note.encrypted
+                Text(_note.encrypted
                     ? S.current.Disable_Encryption
                     : S.current.Encrypt),
               ],
             ),
           ),
           PopupMenuItem<String>(
-            value: 'trash',
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  note.deleted ? MdiIcons.deleteRestore : MdiIcons.delete,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-                SizedBox(
-                  width: 8,
-                ),
-                Text(note.deleted
-                    ? S.current.Restore_from_trash
-                    : S.current.Move_to_trash),
-              ],
-            ),
-          ),
-          for (String attachment in note.attachments)
-            PopupMenuItem<String>(
-              value: 'removeAttachment.$attachment',
-              child: Row(
-                children: <Widget>[
-                  Icon(
-                    MdiIcons.paperclip,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                  SizedBox(
-                    width: 8,
-                  ),
-                  Flexible(
-                    child: Text(attachment),
-                  ),
-                ],
-              ),
-            ),
-          PopupMenuItem<String>(
-            value: 'addAttachment',
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  MdiIcons.filePlus,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-                SizedBox(
-                  width: 8,
-                ),
-                Text(S.current.Add_Attachment),
-              ],
-            ),
-          ),
-          //if (!store.isDendronModeEnabled) ...[
-          for (String tag in note.tags)
-            PopupMenuItem<String>(
-              value: 'removeTag.$tag',
-              child: Row(
-                children: <Widget>[
-                  Icon(
-                    MdiIcons.tag,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                  SizedBox(
-                    width: 8,
-                  ),
-                  Text(tag),
-                ],
-              ),
-            ),
-          PopupMenuItem<String>(
-            value: 'addTag',
+            value: ca.menuAddTag,
             child: Row(
               children: <Widget>[
                 Icon(
@@ -378,7 +339,73 @@ class _EditPageState extends State<EditPage> {
               ],
             ),
           ),
-          //]
+          for (String tag in _note.tags)
+            PopupMenuItem<String>(
+              value: '${ca.menuRemoveTag}.$tag',
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    MdiIcons.tag,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  SizedBox(
+                    width: 8,
+                  ),
+                  Text(tag),
+                ],
+              ),
+            ),
+          // Disable attachment function
+          // PopupMenuItem<String>(
+          //   value: ca.menuAddAttachment,
+          //   child: Row(
+          //     children: <Widget>[
+          //       Icon(
+          //         MdiIcons.filePlus,
+          //         color: Theme.of(context).colorScheme.onSurface,
+          //       ),
+          //       SizedBox(
+          //         width: 8,
+          //       ),
+          //       Text(S.current.Add_Attachment),
+          //     ],
+          //   ),
+          // ),
+          // for (String attachment in _note.attachments)
+          //   PopupMenuItem<String>(
+          //     value: '${ca.menuRemoveAttachment}.$attachment',
+          //     child: Row(
+          //       children: <Widget>[
+          //         Icon(
+          //           MdiIcons.paperclip,
+          //           color: Theme.of(context).colorScheme.onSurface,
+          //         ),
+          //         SizedBox(
+          //           width: 8,
+          //         ),
+          //         Flexible(
+          //           child: Text(attachment),
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          PopupMenuItem<String>(
+            value: ca.menuTrash,
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  _note.deleted ? MdiIcons.deleteRestore : MdiIcons.delete,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                SizedBox(
+                  width: 8,
+                ),
+                Text(_note.deleted
+                    ? S.current.Restore_from_trash
+                    : S.current.Move_to_trash),
+              ],
+            ),
+          ),
         ];
       },
       onCanceled: () {
@@ -390,10 +417,18 @@ class _EditPageState extends State<EditPage> {
         if (divIndex == -1) divIndex = result.length;
 
         switch (result.substring(0, divIndex)) {
-          case 'encrypt':
-            note.encrypted = !note.encrypted;
+          case ca.menuPin:
+            _note.pinned = !_note.pinned;
+            break;
+
+          case ca.menuFavorite:
+            _note.favorite = !_note.favorite;
+            break;
+
+          case ca.menuEncrypt:
+            _note.encrypted = !_note.encrypted;
             //
-            if (note.encrypted) {
+            if (_note.encrypted) {
               TextEditingController ctrl = TextEditingController();
               String pwd = await showDialog(
                     context: context,
@@ -425,11 +460,11 @@ class _EditPageState extends State<EditPage> {
                   '';
               if (pwd.isEmpty) {
                 // recover `encrypted` value
-                note.encrypted = false;
+                _note.encrypted = false;
                 break;
               } else {
-                note.encryption = Encryption(key: pwd);
-                note.isDecryptSuccess = true;
+                _note.encryption = Encryption(key: pwd);
+                _note.isDecryptSuccess = true;
               }
             } else {
               // Disable encryption
@@ -437,97 +472,7 @@ class _EditPageState extends State<EditPage> {
             }
             break;
 
-          case 'favorite':
-            note.favorite = !note.favorite;
-            break;
-
-          case 'pin':
-            note.pinned = !note.pinned;
-            break;
-
-          case 'addAttachment':
-            final result = await FilePicker.platform.pickFiles();
-            if (result == null) break;
-            File file = File(result.files.first.path ?? '');
-            if (!file.existsSync()) break;
-
-            String fullFileName = p.basename(file.path);
-            String fileName = fullFileName.split('.').first;
-            String ext = p.extension(file.path);
-
-            int i = 0;
-            File newFile;
-            do {
-              fullFileName = i > 0 ? fileName + ' ($i)' + ext : fullFileName;
-              newFile =
-                  File(store.attachmentsDir.path + p.separator + fullFileName);
-
-              i++;
-            } while (newFile.existsSync());
-
-            await file.copy(newFile.path);
-
-            final attachmentName = p.basename(newFile.path);
-
-            note.attachments.add(attachmentName);
-
-            await file.delete();
-
-            int start = _editCtrl.selection.start;
-
-            final insert = '![](@attachment/$attachmentName)';
-            try {
-              _editCtrl.text = _editCtrl.text.substring(0, start) +
-                  insert +
-                  _editCtrl.text.substring(start);
-
-              _editCtrl.selection = TextSelection(
-                  baseOffset: start, extentOffset: start + insert.length);
-            } catch (e) {
-              // TODO Handle this case
-            }
-
-            break;
-
-          case 'removeAttachment':
-            String attachment = result.substring(divIndex + 1);
-
-            bool remove = await showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                          title: Text(S.current.Delete_Attachment),
-                          content: Text(S.current
-                              .Do_you_want_to_delete_the_attachment(
-                                  attachment)),
-                          actions: <Widget>[
-                            TextButton(
-                              child: Text(S.current.Cancel),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                            TextButton(
-                              child: Text(S.current.Delete),
-                              onPressed: () {
-                                Navigator.of(context).pop(true);
-                              },
-                            ),
-                          ],
-                        )) ??
-                false;
-            if (remove) {
-              File file =
-                  File(store.attachmentsDir.path + p.separator + attachment);
-              await file.delete();
-              note.attachments.remove(attachment);
-            }
-            break;
-
-          case 'trash':
-            note.deleted = !note.deleted;
-            break;
-
-          case 'addTag':
+          case ca.menuAddTag:
             TextEditingController ctrl = TextEditingController();
             String newTag = await showDialog(
                     context: context,
@@ -557,16 +502,16 @@ class _EditPageState extends State<EditPage> {
                         )) ??
                 '';
             if (newTag.isNotEmpty) {
-              print('ADD');
-              note.tags.add(newTag);
-              store.updateTagList();
+              // print('ADD');
+              _note.tags.add(newTag);
+              _store.updateTagList();
             }
             break;
 
-          case 'removeTag':
+          case ca.menuRemoveTag:
             String tag = result.substring(divIndex + 1);
 
-            bool remove = await showDialog(
+            bool isRemove = await showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
                           title: Text(S.current.Remove_Tag),
@@ -589,27 +534,108 @@ class _EditPageState extends State<EditPage> {
                           ],
                         )) ??
                 false;
-            if (remove) {
-              print('REMOVE');
-              note.tags.remove(tag);
-              store.updateTagList();
+            if (isRemove) {
+              // print('REMOVE');
+              _note.tags.remove(tag);
+              _store.updateTagList();
             }
+            break;
+
+          case ca.menuAddAttachment:
+            final result = await FilePicker.platform.pickFiles();
+            if (result == null) break;
+            File file = File(result.files.first.path ?? '');
+            if (!file.existsSync()) break;
+
+            String fullFileName = p.basename(file.path);
+            String fileName = fullFileName.split('.').first;
+            String ext = p.extension(file.path);
+
+            int i = 0;
+            File newFile;
+            do {
+              fullFileName = i > 0 ? fileName + ' ($i)' + ext : fullFileName;
+              newFile =
+                  File(_store.attachmentsDir.path + p.separator + fullFileName);
+
+              i++;
+            } while (newFile.existsSync());
+
+            await file.copy(newFile.path);
+
+            final attachmentName = p.basename(newFile.path);
+
+            _note.attachments.add(attachmentName);
+
+            await file.delete();
+
+            int start = _editCtrl.selection.start;
+
+            final insert = '![](@attachment/$attachmentName)';
+            try {
+              _editCtrl.text = _editCtrl.text.substring(0, start) +
+                  insert +
+                  _editCtrl.text.substring(start);
+
+              _editCtrl.selection = TextSelection(
+                  baseOffset: start, extentOffset: start + insert.length);
+            } catch (e) {
+              // TODO Handle this case
+            }
+            break;
+
+          case ca.menuRemoveAttachment:
+            String attachment = result.substring(divIndex + 1);
+
+            bool remove = await showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                          title: Text(S.current.Delete_Attachment),
+                          content: Text(S.current
+                              .Do_you_want_to_delete_the_attachment(
+                                  attachment)),
+                          actions: <Widget>[
+                            TextButton(
+                              child: Text(S.current.Cancel),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            TextButton(
+                              child: Text(S.current.Delete),
+                              onPressed: () {
+                                Navigator.of(context).pop(true);
+                              },
+                            ),
+                          ],
+                        )) ??
+                false;
+            if (remove) {
+              File file =
+                  File(_store.attachmentsDir.path + p.separator + attachment);
+              await file.delete();
+              _note.attachments.remove(attachment);
+            }
+            break;
+
+          case ca.menuTrash:
+            _note.deleted = !_note.deleted;
             break;
         }
 
-        PersistentStore.saveNote(note, _editCtrl.text);
+        PersistentStore.saveNote(_note, _editCtrl.text);
       },
     );
   }
 
   ///
   _autosave() async {
-    autoSaveCounter++;
+    _autoSaveCounter++;
 
-    final asf = autoSaveCounter;
+    final asf = _autoSaveCounter;
     await Future.delayed(Duration(milliseconds: 500));
 
-    if (asf == autoSaveCounter) {
+    if (asf == _autoSaveCounter) {
       _save();
     }
   }
@@ -619,22 +645,22 @@ class _EditPageState extends State<EditPage> {
     String title;
 
     try {
-      if (!currentData.trimLeft().startsWith('# ')) throw S.current.No_MD_title;
+      if (!_oldText.trimLeft().startsWith('# ')) throw S.current.No_MD_title;
 
       String markedTitle = markd.markdownToHtml(
-          RegExp(r'(?<=# ).*').stringMatch(currentData) ?? '',
+          RegExp(r'(?<=# ).*').stringMatch(_oldText) ?? '',
           extensionSet: markd.ExtensionSet.gitHubWeb);
       // print(markedTitle);
 
       title = markedTitle.replaceAll(RegExp(r'<[^>]*>'), '').trim();
       logger.d(title);
     } catch (e) {
-      title = note.title;
+      title = _note.title;
     }
     // print(title);
 
     File? oldFile;
-    if (note.title != title && !store.isDendronMode) {
+    if (_note.title != title && !_store.isDendronMode) {
       if (File("${PrefService.getString(ca.notesDirectory) ?? ''}/${title}.md")
           .existsSync()) {
         showDialog(
@@ -654,17 +680,17 @@ class _EditPageState extends State<EditPage> {
                 ));
         return;
       } else {
-        oldFile = note.file;
-        note.file = File(
+        oldFile = _note.file;
+        _note.file = File(
             "${PrefService.getString(ca.notesDirectory) ?? ''}/${title}.md");
       }
     }
 
-    note.title = title;
+    _note.title = title;
 
-    note.updated = DateTime.now();
+    _note.updated = DateTime.now();
 
-    await PersistentStore.saveNote(note, currentData);
+    await PersistentStore.saveNote(_note, _oldText);
 
     if (oldFile != null) oldFile.deleteSync();
   }
@@ -809,7 +835,9 @@ class _EditPageState extends State<EditPage> {
       //       : '--1'
       // ));
 
-      if (_oldVal == null || _oldVal!.text == _editCtrl.text) {
+      if (_oldVal == null ||
+          _oldVal!.text == _editCtrl.text ||
+          _oldText == _editCtrl.text) {
         _oldVal = _editCtrl.value; // update selection
         return;
       }
@@ -826,30 +854,35 @@ class _EditPageState extends State<EditPage> {
       _oldVal = _editCtrl.value;
 
       Uint8List diff =
-          bsdiff(utf8.encode(_editCtrl.text), utf8.encode(currentData));
-      // logger.d((
-      //   'ctrl Listener diff',
-      //   diff,
-      // ));
+          bsdiff(utf8.encode(_editCtrl.text), utf8.encode(_oldText));
       int cursorPosition = max(
           0,
-          _editCtrl.text.length > currentData.length
+          _editCtrl.text.length > _oldText.length
               ? _editCtrl.selection.start - 1
               : _editCtrl.selection.start + 1);
 
-      history.add(diff);
-      cursorHistory.add(cursorPosition);
+      _textHistory.add(diff);
+      _cursorHistory.add(cursorPosition);
 
-      if (history.length == 1) {
+      logger.d((
+        'ctrl Listener diff',
+        now(),
+        diff.length,
+        diff,
+        _textHistory.length,
+        _cursorHistory.length,
+      ));
+
+      if (_textHistory.length == 1) {
         // First entry
         setState(() {});
-      } else if (history.length > 1000) {
+      } else if (_textHistory.length > 1000) {
         // First entry
-        history.removeAt(0);
-        cursorHistory.removeAt(0);
+        _textHistory.removeAt(0);
+        _cursorHistory.removeAt(0);
       }
 
-      currentData = _editCtrl.text;
+      _oldText = _editCtrl.text;
       // logger.d(history.toString());
       // logger.d(history.length);
       if (PrefService.getBool(ca.canAutoSave) ?? false) {
@@ -868,12 +901,12 @@ class _EditPageState extends State<EditPage> {
     var doc = fm.parse(content); */
     String content = '';
     while (true) {
-      content = await PersistentStore.readContent(note);
+      content = await PersistentStore.readContent(_note);
 
       // The password entered cannot decrypt the document back to the previous page
-      if (note.encrypted && !note.isDecryptSuccess) {
+      if (_note.encrypted && !_note.isDecryptSuccess) {
         TextEditingController ctrl = TextEditingController();
-        final (cd, canRetry) = note.canRetry();
+        final (cd, canRetry) = _note.canRetry();
 
         String newPwd = await showDialog(
               context: context,
@@ -912,7 +945,7 @@ class _EditPageState extends State<EditPage> {
             '';
         if (newPwd.isNotEmpty) {
           // retry decryption
-          note.encryption = Encryption(key: newPwd);
+          _note.encryption = Encryption(key: newPwd);
         } else {
           // not retry, back to previous page
           Navigator.pop(context);
@@ -924,7 +957,7 @@ class _EditPageState extends State<EditPage> {
       }
     }
 
-    currentData = content;
+    _oldText = content;
 
     _editCtrl.text = content;
 

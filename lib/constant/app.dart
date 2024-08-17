@@ -1,6 +1,16 @@
 /// App
 const String appName = 'iNote';
 const String gitHubRepo = 'https://github.com/inote-flutter/inote';
+/// PopupMenuButton
+const String menuPin='pin';
+const String menuFavorite='favorite';
+const String menuEncrypt='encrypt';
+const String menuAddTag='addTag';
+const String menuRemoveTag='removeTag';
+const String menuAddAttachment='addAttachment';
+const String menuRemoveAttachment='removeAttachment';
+const String menuTrash='trash';
+// const String menu_='';
 
 /// Setting keys for local storage.
 const String prefix = 'inote_';

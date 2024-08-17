@@ -561,7 +561,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: caba8e4cc0d335ae23c4039ca79d0069c25d2163
+      resolved-ref: c93cc5aa604316a29a95a5e968862c8f634c87c6
       url: "git@github.com:inote-flutter/preferences"
     source: git
     version: "5.3.0+1"
