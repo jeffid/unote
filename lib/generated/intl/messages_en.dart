@@ -20,15 +20,23 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'en';
 
-  static String m0(attachment) =>
+  static String m0(seconds) => "Cannot be entered for ${seconds} seconds";
+
+  static String m1(attachment) =>
       "Do you want to delete the attachment <${attachment}> ? This will remove it from this note and delete it permanently on disk.";
 
-  static String m1(tag) =>
+  static String m2(tag) =>
       "Do you want to remove the tag ${tag} from this note?";
 
-  static String m2(cd) => "Please try again in ${cd} second(s)";
+  static String m3(min, max) => "Please enter ${min} to ${max} characters";
 
-  static String m3(count) => "${count} note(s) selected";
+  static String m4(len) => "Please enter ${len} digits";
+
+  static String m5(cd) => "Please try again in ${cd} second(s)";
+
+  static String m6(count) => "${count} note(s) selected";
+
+  static String m7(num) => "${num} minutes";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -54,9 +62,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "Back": MessageLookupByLibrary.simpleMessage("Back"),
         "Black_AMOLED": MessageLookupByLibrary.simpleMessage("Black / AMOLED"),
         "Cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
+        "Cannot_be_entered_for_seconds": m0,
         "Choose_Tag_to_remove":
             MessageLookupByLibrary.simpleMessage("Choose Tag to remove"),
+        "Clear_All": MessageLookupByLibrary.simpleMessage("Clear All"),
         "Confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
+        "Confirm_Password":
+            MessageLookupByLibrary.simpleMessage("Confirm Password"),
         "Conflict": MessageLookupByLibrary.simpleMessage("Conflict"),
         "Dark": MessageLookupByLibrary.simpleMessage("Dark"),
         "Data_Directory":
@@ -78,16 +90,19 @@ class MessageLookup extends MessageLookupByLibrary {
         "Do_you_really_want_to_delete_the_selected_notes":
             MessageLookupByLibrary.simpleMessage(
                 "Do you really want to delete the selected notes?"),
+        "Do_you_really_want_to_delete_this_note":
+            MessageLookupByLibrary.simpleMessage(
+                "Do you really want to delete this note?"),
         "Do_you_really_want_to_discard_your_current_changes":
             MessageLookupByLibrary.simpleMessage(
                 "Do you really want to discard your current changes?"),
-        "Do_you_want_to_delete_the_attachment": m0,
+        "Do_you_want_to_delete_the_attachment": m1,
         "Do_you_want_to_exit_the_app": MessageLookupByLibrary.simpleMessage(
             "Do you want to exit the app?"),
         "Do_you_want_to_recreate_the_tutorial_notes":
             MessageLookupByLibrary.simpleMessage(
                 "Do you want to recreate the tutorial notes and attachments?"),
-        "Do_you_want_to_remove_the_tag_from_this_note": m1,
+        "Do_you_want_to_remove_the_tag_from_this_note": m2,
         "Editor": MessageLookupByLibrary.simpleMessage("Editor"),
         "Enable_Dendron_support":
             MessageLookupByLibrary.simpleMessage("Enable Dendron support"),
@@ -106,13 +121,34 @@ class MessageLookup extends MessageLookupByLibrary {
         "More": MessageLookupByLibrary.simpleMessage("More"),
         "Move_to_trash": MessageLookupByLibrary.simpleMessage("Move to trash"),
         "NONE": MessageLookupByLibrary.simpleMessage("NONE"),
+        "Never": MessageLookupByLibrary.simpleMessage("Never"),
         "No_MD_title": MessageLookupByLibrary.simpleMessage("No MD title"),
         "Ok": MessageLookupByLibrary.simpleMessage("Ok"),
         "Pair_Quotes":
             MessageLookupByLibrary.simpleMessage("Pair Brackets/Quotes"),
+        "Password": MessageLookupByLibrary.simpleMessage("Password"),
+        "Password_cannot_be_empty":
+            MessageLookupByLibrary.simpleMessage("Password cannot be empty"),
+        "Password_is_incorrect":
+            MessageLookupByLibrary.simpleMessage("Password is incorrect"),
+        "Passwords_do_not_match":
+            MessageLookupByLibrary.simpleMessage("Passwords do not match"),
         "Pin": MessageLookupByLibrary.simpleMessage("Pin"),
         "Pin_selected": MessageLookupByLibrary.simpleMessage("Pin selected"),
-        "Please_try_again_in_cd_second": m2,
+        "Please_enter_characters": m3,
+        "Please_enter_digits": m4,
+        "Please_enter_passcode":
+            MessageLookupByLibrary.simpleMessage("Please enter passcode"),
+        "Please_enter_password":
+            MessageLookupByLibrary.simpleMessage("Please enter password"),
+        "Please_input_password":
+            MessageLookupByLibrary.simpleMessage("Please input password"),
+        "Please_set_the_encryption_password": MessageLookupByLibrary.simpleMessage(
+            "Please set the encryption password ( The password cannot be retrieved)"),
+        "Please_set_the_screen_lock_passcode":
+            MessageLookupByLibrary.simpleMessage(
+                "Please set the screen lock passcode"),
+        "Please_try_again_in_cd_second": m5,
         "Preview": MessageLookupByLibrary.simpleMessage("Preview"),
         "Recreate": MessageLookupByLibrary.simpleMessage("Recreate"),
         "Recreate_tutorial_notes":
@@ -127,6 +163,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Retry": MessageLookupByLibrary.simpleMessage("Retry"),
         "Retry_password":
             MessageLookupByLibrary.simpleMessage("Retry password"),
+        "Safety": MessageLookupByLibrary.simpleMessage("Safety"),
         "Search": MessageLookupByLibrary.simpleMessage("Search"),
         "Search_content_of_notes":
             MessageLookupByLibrary.simpleMessage("Search content of notes"),
@@ -134,6 +171,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Select accent color"),
         "Set_Password": MessageLookupByLibrary.simpleMessage(
             "Set a password for the current document ( The password cannot be retrieved)"),
+        "Set_the_screen_lock_duration": MessageLookupByLibrary.simpleMessage(
+            "Set the screen lock duration"),
         "Settings": MessageLookupByLibrary.simpleMessage("Settings"),
         "Show_virtual_tags":
             MessageLookupByLibrary.simpleMessage("Show virtual tags"),
@@ -153,6 +192,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "There_is_already_a_note_with_this_title":
             MessageLookupByLibrary.simpleMessage(
                 "There is already a note with this title."),
+        "This_will_delete_it_permanently": MessageLookupByLibrary.simpleMessage(
+            "This will delete it permanently."),
         "This_will_delete_them_permanently":
             MessageLookupByLibrary.simpleMessage(
                 "This will delete them permanently."),
@@ -172,8 +213,11 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Use Mode Switcher"),
         "Use_external_storage":
             MessageLookupByLibrary.simpleMessage("Use external storage"),
-        "countSelectedNotes": m3,
+        "countSelectedNotes": m6,
         "en": MessageLookupByLibrary.simpleMessage("English"),
+        "minutes": m7,
+        "set_the_screen_lock_passcode": MessageLookupByLibrary.simpleMessage(
+            "Set the screen lock passcode"),
         "zhCn": MessageLookupByLibrary.simpleMessage("中文-简体"),
         "zhHant": MessageLookupByLibrary.simpleMessage("中文-繁体")
       };

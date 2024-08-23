@@ -14,7 +14,10 @@ import '/main.dart';
 import '/generated/l10n.dart';
 // import '/utils/logger.dart';
 import '/provider/theme.dart';
+import '/store/encryption.dart';
 import '/store/notes.dart';
+import './form/pwd_form.dart';
+import './screen_lock.dart';
 
 ///
 class SettingsPage extends StatefulWidget {
@@ -26,7 +29,10 @@ class SettingsPage extends StatefulWidget {
 
 ///
 class _SettingsPageState extends State<SettingsPage> {
+  ///
   NotesStore get store => widget.store;
+
+  ///
   @override
   void initState() {
     PrefService.setDefaultValues({
@@ -180,6 +186,59 @@ class _SettingsPageState extends State<SettingsPage> {
                   color;
             }
           },
+        ),
+
+        /// Safety
+        PreferenceTitle(S.current.Safety),
+        SwitchPreference(
+          S.current.set_the_screen_lock_passcode,
+          ca.isScreenLock,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+          onEnable: () async {
+            String pwd = await screenLockPwdDialog(context);
+            // debugPrint('Safety pwd: $pwd');
+            if (pwd.isEmpty) throw 'rollback screen lock status';
+            String pwdHash = pwdHashStr(pwd);
+            // debugPrint('Safety pwdHash: $pwdHash');
+            PrefService.setString(ca.screenLockPwd, pwdHash);
+
+            // start screen lock
+            scLock();
+          },
+          onDisable: () {
+            PrefService.remove(ca.screenLockPwd);
+          },
+        ),
+        ListTile(
+          title: Text(S.current.Set_the_screen_lock_duration),
+          trailing: DropdownButton<dynamic>(
+            value: PrefService.intDefault(ca.screenLockDuration, def: 0),
+            underline: Container(),
+            onChanged: (v) {
+              // debugPrint('Safety duration: $v');
+              PrefService.setInt(ca.screenLockDuration, v);
+              setState(() {});
+            },
+            items: <DropdownMenuItem>[
+              DropdownMenuItem(
+                value: 0,
+                child: Text(S.current.Never),
+              ),
+              DropdownMenuItem(
+                value: 5,
+                child: Text(S.current.minutes(5)),
+              ),
+              DropdownMenuItem(
+                value: 30,
+                child: Text(S.current.minutes(30)),
+              ),
+              DropdownMenuItem(
+                value: 60,
+                child: Text(S.current.minutes(60)),
+              ),
+            ],
+          ),
         ),
 
         /// Data Directory

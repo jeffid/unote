@@ -20,13 +20,21 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'zh_CN';
 
-  static String m0(attachment) => "确定删除附件 <${attachment}> ? 该文件会被从硬盘中永久删除";
+  static String m0(seconds) => "请于 ${seconds} 秒后再试";
 
-  static String m1(tag) => "确定要从文档中移除标签：${tag}？";
+  static String m1(attachment) => "确定删除附件 <${attachment}> ? 该文件会被从硬盘中永久删除";
 
-  static String m2(cd) => "请在 ${cd} 秒后重试";
+  static String m2(tag) => "确定要从文档中移除标签：${tag}？";
 
-  static String m3(count) => "${count} 个选中文档";
+  static String m3(min, max) => "请输入 ${min} 至 ${max} 位的字符";
+
+  static String m4(len) => "请输入 ${len} 位纯数字字符";
+
+  static String m5(cd) => "请在 ${cd} 秒后重试";
+
+  static String m6(count) => "${count} 个选中文档";
+
+  static String m7(num) => "${num} 分钟";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -48,9 +56,12 @@ class MessageLookup extends MessageLookupByLibrary {
         "Back": MessageLookupByLibrary.simpleMessage("返回"),
         "Black_AMOLED": MessageLookupByLibrary.simpleMessage("黑色 / AMOLED"),
         "Cancel": MessageLookupByLibrary.simpleMessage("取消"),
+        "Cannot_be_entered_for_seconds": m0,
         "Choose_Tag_to_remove":
             MessageLookupByLibrary.simpleMessage("选择要移除的标签"),
+        "Clear_All": MessageLookupByLibrary.simpleMessage("清空"),
         "Confirm": MessageLookupByLibrary.simpleMessage("确定"),
+        "Confirm_Password": MessageLookupByLibrary.simpleMessage("确认密码"),
         "Conflict": MessageLookupByLibrary.simpleMessage("冲突"),
         "Dark": MessageLookupByLibrary.simpleMessage("暗色"),
         "Data_Directory": MessageLookupByLibrary.simpleMessage("存储文件夹"),
@@ -64,14 +75,16 @@ class MessageLookup extends MessageLookupByLibrary {
         "Disable_Encryption": MessageLookupByLibrary.simpleMessage("取消加密"),
         "Do_you_really_want_to_delete_the_selected_notes":
             MessageLookupByLibrary.simpleMessage("确定要删除选中的文档吗？"),
+        "Do_you_really_want_to_delete_this_note":
+            MessageLookupByLibrary.simpleMessage("确定要删除该文档码？"),
         "Do_you_really_want_to_discard_your_current_changes":
             MessageLookupByLibrary.simpleMessage("确定放弃当前变量吗？"),
-        "Do_you_want_to_delete_the_attachment": m0,
+        "Do_you_want_to_delete_the_attachment": m1,
         "Do_you_want_to_exit_the_app":
             MessageLookupByLibrary.simpleMessage("确定要退出APP吗？"),
         "Do_you_want_to_recreate_the_tutorial_notes":
             MessageLookupByLibrary.simpleMessage("确定要重建教程文档吗？"),
-        "Do_you_want_to_remove_the_tag_from_this_note": m1,
+        "Do_you_want_to_remove_the_tag_from_this_note": m2,
         "Editor": MessageLookupByLibrary.simpleMessage("编辑器"),
         "Enable_Dendron_support":
             MessageLookupByLibrary.simpleMessage("支持 Dendron 模式"),
@@ -88,12 +101,29 @@ class MessageLookup extends MessageLookupByLibrary {
         "More": MessageLookupByLibrary.simpleMessage("更多"),
         "Move_to_trash": MessageLookupByLibrary.simpleMessage("丢弃到回收站"),
         "NONE": MessageLookupByLibrary.simpleMessage("撤选"),
+        "Never": MessageLookupByLibrary.simpleMessage("永不"),
         "No_MD_title": MessageLookupByLibrary.simpleMessage("无文档标题"),
         "Ok": MessageLookupByLibrary.simpleMessage("完成"),
         "Pair_Quotes": MessageLookupByLibrary.simpleMessage("启用符号自动匹对"),
+        "Password": MessageLookupByLibrary.simpleMessage("密码"),
+        "Password_cannot_be_empty":
+            MessageLookupByLibrary.simpleMessage("密码不能为空"),
+        "Password_is_incorrect": MessageLookupByLibrary.simpleMessage("密码不正确"),
+        "Passwords_do_not_match":
+            MessageLookupByLibrary.simpleMessage("两次密码不匹配"),
         "Pin": MessageLookupByLibrary.simpleMessage("置顶"),
         "Pin_selected": MessageLookupByLibrary.simpleMessage("置顶选中"),
-        "Please_try_again_in_cd_second": m2,
+        "Please_enter_characters": m3,
+        "Please_enter_digits": m4,
+        "Please_enter_passcode":
+            MessageLookupByLibrary.simpleMessage("请输入屏锁密码"),
+        "Please_enter_password": MessageLookupByLibrary.simpleMessage("请输入密码"),
+        "Please_input_password": MessageLookupByLibrary.simpleMessage("请输入密码"),
+        "Please_set_the_encryption_password":
+            MessageLookupByLibrary.simpleMessage("请设置文档加密密码（该密码不可找回！）"),
+        "Please_set_the_screen_lock_passcode":
+            MessageLookupByLibrary.simpleMessage("请设置屏锁密码"),
+        "Please_try_again_in_cd_second": m5,
         "Preview": MessageLookupByLibrary.simpleMessage("预览"),
         "Recreate": MessageLookupByLibrary.simpleMessage("重建"),
         "Recreate_tutorial_notes":
@@ -106,12 +136,15 @@ class MessageLookup extends MessageLookupByLibrary {
         "Restore_from_trash": MessageLookupByLibrary.simpleMessage("从回收站恢复"),
         "Retry": MessageLookupByLibrary.simpleMessage("重试"),
         "Retry_password": MessageLookupByLibrary.simpleMessage("重试密码"),
+        "Safety": MessageLookupByLibrary.simpleMessage("安全"),
         "Search": MessageLookupByLibrary.simpleMessage("搜索"),
         "Search_content_of_notes":
             MessageLookupByLibrary.simpleMessage("搜索包含文档内容"),
         "Select_accent_color": MessageLookupByLibrary.simpleMessage("选择强调色"),
         "Set_Password":
             MessageLookupByLibrary.simpleMessage("为当前文档设置密码（该密码不可找回！）"),
+        "Set_the_screen_lock_duration":
+            MessageLookupByLibrary.simpleMessage("设置屏锁间隔时间"),
         "Settings": MessageLookupByLibrary.simpleMessage("设置"),
         "Show_virtual_tags":
             MessageLookupByLibrary.simpleMessage("Show virtual tags"),
@@ -127,6 +160,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "Theme": MessageLookupByLibrary.simpleMessage("主题"),
         "There_is_already_a_note_with_this_title":
             MessageLookupByLibrary.simpleMessage("该标题已存在"),
+        "This_will_delete_it_permanently":
+            MessageLookupByLibrary.simpleMessage("确定永久删除吗？"),
         "This_will_delete_them_permanently":
             MessageLookupByLibrary.simpleMessage("本操作将永久删除该文件"),
         "Trash": MessageLookupByLibrary.simpleMessage("丢弃"),
@@ -141,8 +176,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "Use_Mode_Switcher": MessageLookupByLibrary.simpleMessage("启用显示模式切换开关"),
         "Use_external_storage":
             MessageLookupByLibrary.simpleMessage("使用指定存储文件夹"),
-        "countSelectedNotes": m3,
+        "countSelectedNotes": m6,
         "en": MessageLookupByLibrary.simpleMessage("English"),
+        "minutes": m7,
+        "set_the_screen_lock_passcode":
+            MessageLookupByLibrary.simpleMessage("设置屏锁密码"),
         "zhCn": MessageLookupByLibrary.simpleMessage("中文-简体"),
         "zhHant": MessageLookupByLibrary.simpleMessage("中文-繁体")
       };

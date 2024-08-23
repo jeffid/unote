@@ -970,6 +970,216 @@ class S {
     );
   }
 
+  /// `Please input password`
+  String get Please_input_password {
+    return Intl.message(
+      'Please input password',
+      name: 'Please_input_password',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please enter password`
+  String get Please_enter_password {
+    return Intl.message(
+      'Please enter password',
+      name: 'Please_enter_password',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please enter passcode`
+  String get Please_enter_passcode {
+    return Intl.message(
+      'Please enter passcode',
+      name: 'Please_enter_passcode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Password is incorrect`
+  String get Password_is_incorrect {
+    return Intl.message(
+      'Password is incorrect',
+      name: 'Password_is_incorrect',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear All`
+  String get Clear_All {
+    return Intl.message(
+      'Clear All',
+      name: 'Clear_All',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Safety`
+  String get Safety {
+    return Intl.message(
+      'Safety',
+      name: 'Safety',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please set the screen lock passcode`
+  String get Please_set_the_screen_lock_passcode {
+    return Intl.message(
+      'Please set the screen lock passcode',
+      name: 'Please_set_the_screen_lock_passcode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Set the screen lock passcode`
+  String get set_the_screen_lock_passcode {
+    return Intl.message(
+      'Set the screen lock passcode',
+      name: 'set_the_screen_lock_passcode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Set the screen lock duration`
+  String get Set_the_screen_lock_duration {
+    return Intl.message(
+      'Set the screen lock duration',
+      name: 'Set_the_screen_lock_duration',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please set the encryption password ( The password cannot be retrieved)`
+  String get Please_set_the_encryption_password {
+    return Intl.message(
+      'Please set the encryption password ( The password cannot be retrieved)',
+      name: 'Please_set_the_encryption_password',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Password`
+  String get Password {
+    return Intl.message(
+      'Password',
+      name: 'Password',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Confirm Password`
+  String get Confirm_Password {
+    return Intl.message(
+      'Confirm Password',
+      name: 'Confirm_Password',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Password cannot be empty`
+  String get Password_cannot_be_empty {
+    return Intl.message(
+      'Password cannot be empty',
+      name: 'Password_cannot_be_empty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Passwords do not match`
+  String get Passwords_do_not_match {
+    return Intl.message(
+      'Passwords do not match',
+      name: 'Passwords_do_not_match',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Do you really want to delete this note?`
+  String get Do_you_really_want_to_delete_this_note {
+    return Intl.message(
+      'Do you really want to delete this note?',
+      name: 'Do_you_really_want_to_delete_this_note',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This will delete it permanently.`
+  String get This_will_delete_it_permanently {
+    return Intl.message(
+      'This will delete it permanently.',
+      name: 'This_will_delete_it_permanently',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Never`
+  String get Never {
+    return Intl.message(
+      'Never',
+      name: 'Never',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{num} minutes`
+  String minutes(Object num) {
+    return Intl.message(
+      '$num minutes',
+      name: 'minutes',
+      desc: '',
+      args: [num],
+    );
+  }
+
+  /// `Please enter {len} digits`
+  String Please_enter_digits(Object len) {
+    return Intl.message(
+      'Please enter $len digits',
+      name: 'Please_enter_digits',
+      desc: '',
+      args: [len],
+    );
+  }
+
+  /// `Please enter {min} to {max} characters`
+  String Please_enter_characters(Object min, Object max) {
+    return Intl.message(
+      'Please enter $min to $max characters',
+      name: 'Please_enter_characters',
+      desc: '',
+      args: [min, max],
+    );
+  }
+
+  /// `Cannot be entered for {seconds} seconds`
+  String Cannot_be_entered_for_seconds(Object seconds) {
+    return Intl.message(
+      'Cannot be entered for $seconds seconds',
+      name: 'Cannot_be_entered_for_seconds',
+      desc: '',
+      args: [seconds],
+    );
+  }
+
   /// `{count} note(s) selected`
   String countSelectedNotes(Object count) {
     return Intl.message(

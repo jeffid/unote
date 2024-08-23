@@ -18,21 +18,31 @@ import '/store/persistent.dart';
 import '/utils/logger.dart';
 import './about.dart';
 import './edit.dart';
+// import './screen_lock.dart';
 import './settings.dart';
 
 ///
 class NoteListPage extends StatefulWidget {
   ///
   NoteListPage(
-      {required this.filterTag,
-      required this.searchText,
-      required this.isFirstPage});
+      {this.filterTag = '', this.searchText = '', this.isFirst = false});
 
+  /// filter tag
   final String filterTag;
 
+  /// search text
   final String searchText;
 
-  final bool isFirstPage;
+  /// is the first page
+  final bool isFirst;
+
+  static show(BuildContext context,
+      {String tag = '', String search = '', bool isFirst = false}) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) =>
+          NoteListPage(filterTag: tag, searchText: search, isFirst: isFirst),
+    ));
+  }
 
   ///
   @override
@@ -71,7 +81,7 @@ class _NoteListPageState extends State<NoteListPage> {
 
     store.init();
     _load().then((_) {
-      if (widget.isFirstPage) {
+      if (widget.isFirst) {
         // todo MissingPluginException(No implementation found for method getLaunchAction on channel plugins.flutter.io/quick_actions)
         // final quickActions = QuickActions();
         // quickActions.initialize((shortcutType) {
@@ -325,9 +335,10 @@ class _NoteListPageState extends State<NoteListPage> {
               if (await showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                            title:
-                                Text('Do you really want to delete this note?'),
-                            content: Text('This will delete it permanently.'),
+                            title: Text(S.current
+                                .Do_you_really_want_to_delete_this_note),
+                            content:
+                                Text(S.current.This_will_delete_it_permanently),
                             actions: <Widget>[
                               TextButton(
                                 child: Text(S.current.Cancel),
@@ -381,11 +392,11 @@ class _NoteListPageState extends State<NoteListPage> {
       endActionPane:
           ActionPane(motion: const DrawerMotion(), children: <Widget>[
         SlidableAction(
-          label: note.favorite ? S.current.Unfavorite : S.current.Favorite,
-          backgroundColor: Colors.yellow,
-          icon: note.favorite ? MdiIcons.starOff : MdiIcons.star,
+          label: note.pinned ? S.current.Unpin : S.current.Pin,
+          backgroundColor: Colors.green,
+          icon: note.pinned ? MdiIcons.pinOff : MdiIcons.pin,
           onPressed: (context) async {
-            note.favorite = !note.favorite;
+            note.pinned = !note.pinned;
 
             PersistentStore.saveNoteHeader(note);
 
@@ -393,11 +404,11 @@ class _NoteListPageState extends State<NoteListPage> {
           },
         ),
         SlidableAction(
-          label: note.pinned ? S.current.Unpin : S.current.Pin,
-          backgroundColor: Colors.green,
-          icon: note.pinned ? MdiIcons.pinOff : MdiIcons.pin,
+          label: note.favorite ? S.current.Unfavorite : S.current.Favorite,
+          backgroundColor: Colors.yellow,
+          icon: note.favorite ? MdiIcons.starOff : MdiIcons.star,
           onPressed: (context) async {
-            note.pinned = !note.pinned;
+            note.favorite = !note.favorite;
 
             PersistentStore.saveNoteHeader(note);
 
@@ -472,6 +483,7 @@ class _NoteListPageState extends State<NoteListPage> {
                     content: TextField(
                       controller: ctrl,
                       autofocus: true,
+                      obscureText: true,
                       readOnly: !canRetry,
                       decoration: InputDecoration(
                         hintText: canRetry
@@ -990,7 +1002,7 @@ class _NoteListPageState extends State<NoteListPage> {
     if (_selectedNotes.isNotEmpty) {
       _deselectAllNotes();
       shouldPop = false;
-    } else if (!widget.isFirstPage) {
+    } else if (!widget.isFirst) {
       shouldPop = true;
     } else {
       shouldPop = await showDialog(

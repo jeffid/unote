@@ -185,6 +185,65 @@
   "@Show_virtual_tags": {},
   "Adds_a_virtual_tag_to_notes_which_are_in_a_subdirectory": "以子文件夹名作为虚拟标签",
   "@Adds_a_virtual_tag_to_notes_which_are_in_a_subdirectory": {},
+  "Please_input_password": "请输入密码",
+  "@Please_input_password": {},
+  "Please_enter_password": "请输入密码",
+  "@Please_enter_password": {},
+  "Please_enter_passcode": "请输入屏锁密码",
+  "@Please_enter_passcode": {},
+  "Password_is_incorrect": "密码不正确",
+  "@Password_is_incorrect": {},
+  "Clear_All": "清空",
+  "@Clear_All": {},
+  "Safety": "安全",
+  "@Safety": {},
+  "Please_set_the_screen_lock_passcode": "请设置屏锁密码",
+  "@Please_set_the_screen_lock_passcode": {},
+  "set_the_screen_lock_passcode": "设置屏锁密码",
+  "@set_the_screen_lock_passcode": {},
+  "Set_the_screen_lock_duration": "设置屏锁间隔时间",
+  "@Set_the_screen_lock_duration": {},
+  "Please_set_the_encryption_password": "请设置文档加密密码（该密码不可找回！）",
+  "@Please_set_the_encryption_password": {},
+  "Password": "密码",
+  "@Password": {},
+  "Confirm_Password": "确认密码",
+  "@Confirm_Password": {},
+  "Password_cannot_be_empty": "密码不能为空",
+  "@Password_cannot_be_empty": {},
+  "Passwords_do_not_match": "两次密码不匹配",
+  "@Passwords_do_not_match": {},
+  "Do_you_really_want_to_delete_this_note": "确定要删除该文档码？",
+  "@Do_you_really_want_to_delete_this_note": {},
+  "This_will_delete_it_permanently": "确定永久删除吗？",
+  "@This_will_delete_it_permanently": {},
+  "Never": "永不",
+  "@Never": {},
+  "minutes": "{num} 分钟",
+  "@minutes": {
+      "placeholders": {
+          "num": {}
+      }
+  },
+  "Please_enter_digits": "请输入 {len} 位纯数字字符",
+  "@Please_enter_digits": {
+    "placeholders": {
+      "len": {}
+    }
+  },
+"Please_enter_characters": "请输入 {min} 至 {max} 位的字符",
+  "@Please_enter_characters": {
+    "placeholders": {
+      "min": {},
+      "max": {}
+    }
+  },
+  "Cannot_be_entered_for_seconds": "请于 {seconds} 秒后再试",
+  "@Cannot_be_entered_for_seconds": {
+    "placeholders": {
+      "seconds": {}
+    }
+  },
   "countSelectedNotes": "{count} 个选中文档",
   "@countSelectedNotes": {
     "placeholders": {

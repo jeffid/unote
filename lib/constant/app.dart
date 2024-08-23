@@ -55,6 +55,10 @@ const String assetsDirectory = 'assets_directory';
 const String externalDirectory = 'external_directory';
 const String isExternalDirectoryEnabled = 'is_external_directory_enabled';
 const String isExternalDirectoryDisabled = '!' + isExternalDirectoryEnabled;
+// safety
+const String isScreenLock = 'is_screen_lock';
+const String screenLockPwd = 'screen_lock_pwd';
+const String screenLockDuration = 'screen_lock_duration';
 // other
 const String isDendronMode = 'is_dendron_mode';
 const String debugLogsSync = 'debug_logs_sync';

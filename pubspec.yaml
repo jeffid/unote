@@ -69,11 +69,14 @@ dependencies:
   markd:
     #    git: https://github.com/redsolver/markd.git
     git: git@github.com:inote-flutter/markd
-  rich_code_editor:
-    #    git: https://github.com/bats64mgutsi/rich_code_editor.git
-    git: git@github.com:inote-flutter/rich_code_editor
   rich_text_controller:
     git: git@github.com:inote-flutter/rich_text_controller
+  password_strength_checker: ^1.2.4
+  pinput: ^5.0.0
+  local_auth: ^2.3.0
+  flutter_screen_lock: ^9.1.0
+  pin_code_fields: ^8.0.1
+  flutter_verification_code: ^1.1.7
 
 dependency_overrides:
   #  shared_preferences: ^2.0.4

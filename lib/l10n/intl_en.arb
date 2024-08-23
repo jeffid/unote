@@ -96,7 +96,7 @@
     "Enter_Password": "Enter Password",
     "@Enter_Password": {},
     "Set_Password": "Set a password for the current document ( The password cannot be retrieved)",
-    "@Set_Password": {},  
+    "@Set_Password": {},
     "Delete_Attachment": "Delete Attachment",
     "@Delete_Attachment": {},
     "No_MD_title": "No MD title",
@@ -185,6 +185,65 @@
     "@Show_virtual_tags": {},
     "Adds_a_virtual_tag_to_notes_which_are_in_a_subdirectory": "Adds a virtual tag (#/path) to notes which are in a subdirectory",
     "@Adds_a_virtual_tag_to_notes_which_are_in_a_subdirectory": {},
+    "Please_input_password": "Please input password",
+    "@Please_input_password": {},
+    "Please_enter_password": "Please enter password",
+    "@Please_enter_password": {},
+    "Please_enter_passcode": "Please enter passcode",
+    "@Please_enter_passcode": {},
+    "Password_is_incorrect": "Password is incorrect",
+    "@Password_is_incorrect": {},
+    "Clear_All": "Clear All",
+    "@Clear_All": {},
+    "Safety": "Safety",
+    "@Safety": {},
+    "Please_set_the_screen_lock_passcode": "Please set the screen lock passcode",
+    "@Please_set_the_screen_lock_passcode": {},
+    "set_the_screen_lock_passcode": "Set the screen lock passcode",
+    "@set_the_screen_lock_passcode": {},
+    "Set_the_screen_lock_duration": "Set the screen lock duration",
+    "@Set_the_screen_lock_duration": {},
+    "Please_set_the_encryption_password": "Please set the encryption password ( The password cannot be retrieved)",
+    "@Please_set_the_encryption_password": {},
+    "Password": "Password",
+    "@Password": {},
+    "Confirm_Password": "Confirm Password",
+    "@Confirm_Password": {},
+    "Password_cannot_be_empty": "Password cannot be empty",
+    "@Password_cannot_be_empty": {},
+    "Passwords_do_not_match": "Passwords do not match",
+    "@Passwords_do_not_match": {},
+    "Do_you_really_want_to_delete_this_note": "Do you really want to delete this note?",
+    "@Do_you_really_want_to_delete_this_note": {},
+    "This_will_delete_it_permanently": "This will delete it permanently.",
+    "@This_will_delete_it_permanently": {},
+    "Never": "Never",
+    "@Never": {},
+    "minutes": "{num} minutes",
+    "@minutes": {
+        "placeholders": {
+            "num": {}
+        }
+    },
+    "Please_enter_digits": "Please enter {len} digits",
+    "@Please_enter_digits": {
+        "placeholders": {
+            "len": {}
+        }
+    },
+    "Please_enter_characters": "Please enter {min} to {max} characters",
+    "@Please_enter_characters": {
+        "placeholders": {
+            "min": {},
+            "max": {}
+        }
+    },
+    "Cannot_be_entered_for_seconds": "Cannot be entered for {seconds} seconds",
+    "@Cannot_be_entered_for_seconds": {
+        "placeholders": {
+            "seconds": {}
+        }
+    },
     "countSelectedNotes": "{count} note(s) selected",
     "@countSelectedNotes": {
         "placeholders": {

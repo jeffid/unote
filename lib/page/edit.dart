@@ -25,6 +25,7 @@ import '/store/encryption.dart';
 import '/store/notes.dart';
 import '/store/persistent.dart';
 import '/utils/logger.dart';
+import './form/pwd_form.dart';
 import './preview.dart';
 // import '/editor/pairer.dart';
 
@@ -429,35 +430,7 @@ class _EditPageState extends State<EditPage> {
             _note.encrypted = !_note.encrypted;
             //
             if (_note.encrypted) {
-              TextEditingController ctrl = TextEditingController();
-              String pwd = await showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text(S.current.Set_Password),
-                      content: TextField(
-                        controller: ctrl,
-                        autofocus: true,
-                        onSubmitted: (str) {
-                          Navigator.of(context).pop(str);
-                        },
-                      ),
-                      actions: <Widget>[
-                        TextButton(
-                          child: Text(S.current.Cancel),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        TextButton(
-                          child: Text(S.current.Confirm),
-                          onPressed: () {
-                            Navigator.of(context).pop(ctrl.text);
-                          },
-                        ),
-                      ],
-                    ),
-                  ) ??
-                  '';
+              String pwd = await encryptionPwdDialog(context);
               if (pwd.isEmpty) {
                 // recover `encrypted` value
                 _note.encrypted = false;
@@ -916,6 +889,7 @@ class _EditPageState extends State<EditPage> {
                 content: TextField(
                   controller: ctrl,
                   autofocus: true,
+                  obscureText: true,
                   readOnly: !canRetry,
                   decoration: InputDecoration(
                     hintText: canRetry
