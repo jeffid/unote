@@ -33,6 +33,7 @@ const String zhHant = 'zh_Hant';
 const String sortKey = 'sort_key';
 const String isSortAsc = 'is_sort_asc';
 const String sortByTitle = 'sort_by_title';
+const String isShowSubtitle = 'is_show_subtitle';
 // const String sortByTitle = 'title';
 const String sortByCreated = 'sort_by_created';
 const String sortByUpdated = 'sort_by_updated';
@@ -49,12 +50,12 @@ const String currentTag = 'current_tag';
 const String canShowVirtualTags = 'can_show_virtual_tags';
 const String isSortTags = 'is_sort_tags';
 // notes data
-const String dataDirectory = 'data_directory';
-const String notesDirectory = 'notes_directory';
-const String assetsDirectory = 'assets_directory';
-const String externalDirectory = 'external_directory';
-const String isExternalDirectoryEnabled = 'is_external_directory_enabled';
-const String isExternalDirectoryDisabled = '!' + isExternalDirectoryEnabled;
+const String dataPath = 'data_path';
+const String notesPath = 'notes_path';
+const String assetsPath = 'assets_path';
+// const String externalPath = 'external_path';
+// const String isExternalPathEnabled = 'is_external_path_enabled';
+// const String isExternalPathDisabled = '!' + isExternalPathEnabled;
 // safety
 const String isScreenLock = 'is_screen_lock';
 const String screenLockPwd = 'screen_lock_pwd';

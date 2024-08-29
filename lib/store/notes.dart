@@ -1,13 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+// import 'package:path_provider/path_provider.dart';
 import 'package:preferences/preference_service.dart';
 import 'package:uuid/uuid.dart';
 
 import '/constant/app.dart' as ca;
-import '/data/samples.dart';
+import '/data/tutorial.dart';
 import '/generated/l10n.dart';
 import '/model/note.dart';
 import '/store/persistent.dart';
@@ -15,11 +16,11 @@ import '/utils/logger.dart';
 
 class NotesStore {
   //
-  late Directory appDir, notesDir, attachmentsDir;
+  late Directory notesDir, assetsDir, imagesDir;
 
-  late String syncMethod;
+  String syncMethod = '';
 
-  String? searchText;
+  String searchText = '';
 
   List<Note> allNotes = [];
 
@@ -47,14 +48,11 @@ class NotesStore {
     }
   }
 
-  /* String subDirectoryNotes = ;
-  String subDirectoryAttachments = ; */
-
   bool get isDendronMode => PrefService.getBool(ca.isDendronMode) ?? false;
 
-  String get subNoteDir => isDendronMode ? '' : '/notes';
+  String get subNoteDir => isDendronMode ? '/notes' : '';
 
-  String get subAssetsDir => '/assets';
+  String get subAssetsDir => '$subNoteDir/assets'; // attachments
 
   ///
   void init() {
@@ -103,100 +101,87 @@ class NotesStore {
 
   ///
   Future createTutorialNotes() async {
-    for (String fileName in Samples.tutorialNotes) {
+    String lang = Intl.getCurrentLocale();
+
+    for (String fileName in Tutorial.notesNames) {
       File('${notesDir.path}/$fileName').writeAsStringSync(
-          await rootBundle.loadString('assets/tutorial/notes/$fileName'));
+          await rootBundle.loadString('assets/tutorial/notes/$lang/$fileName'));
     }
   }
 
   ///
-  Future createTutorialAttachments() async {
-    for (String fileName in Samples.tutorialAttachments) {
-      File('${attachmentsDir.path}/$fileName').writeAsBytesSync(
-          (await rootBundle.load('assets/tutorial/attachments/$fileName'))
+  Future createTutorialAssets() async {
+    for (String fileName in Tutorial.assetsNames) {
+      File('${assetsDir.path}/$fileName').writeAsBytesSync(
+          (await rootBundle.load('assets/tutorial/assets/$fileName'))
               .buffer
               .asUint8List());
     }
   }
 
   ///
-  Future listNotes() async {
-    appDir = await getApplicationDocumentsDirectory();
-    Directory directory;
+  Future<void> listNotes() async {
+    // reset list
+    allNotes = [];
 
-    if (PrefService.getBool(ca.isExternalDirectoryEnabled) ?? false) {
-      directory = Directory(PrefService.getString(ca.externalDirectory) ?? '');
-    } else {
-      directory = appDir;
-    }
-    PrefService.setString(ca.dataDirectory, directory.path);
+    String dataPath = (await dataDirectory()).path;
 
-    // print(isDendronModeEnabled);
-
-    notesDir = Directory('${directory.path}$subNoteDir');
-
-    PrefService.setString(ca.notesDirectory, notesDir.path);
-
+    notesDir = Directory('$dataPath$subNoteDir');
+    PrefService.setString(ca.notesPath, notesDir.path);
     if (!notesDir.existsSync()) {
-      notesDir.createSync();
+      notesDir.createSync(recursive: true);
       if (!isDendronMode) await createTutorialNotes();
     }
 
-    attachmentsDir = Directory('${directory.path}$subAssetsDir');
-    PrefService.setString(ca.assetsDirectory, attachmentsDir.path);
-
-    if (!attachmentsDir.existsSync()) {
-      attachmentsDir.createSync();
-      if (!isDendronMode) await createTutorialAttachments();
+    assetsDir = Directory('$dataPath$subAssetsDir');
+    imagesDir = Directory('${assetsDir.path}/images');
+    PrefService.setString(ca.assetsPath, assetsDir.path);
+    if (!assetsDir.existsSync()) {
+      imagesDir.createSync(recursive: true);
+      if (!isDendronMode) await createTutorialAssets();
+    } else if (!imagesDir.existsSync()) {
+      imagesDir.createSync();
     }
 
-    /* for (String fileName in Samples.tutorialNotes) {
-      File('${notesDir.path}/$fileName').writeAsStringSync(
-          await rootBundle.loadString('assets/tutorial/notes/$fileName'));
-    } */
-
-    allNotes = [];
-
     DateTime start = DateTime.now();
-
     await _listNotesInFolder('');
-
-    logger.d(DateTime.now().difference(start));
+    logger.d((DateTime.now().difference(start)));
 
     // _updateTagList();
   }
 
   ///
-  Future<void> _listNotesInFolder(String dir, {bool isSubDir = false}) async {
-    logger.d(('_listNotesInFolder', notesDir, notesDir.path, dir));
+  /// - [path] empty or start with slash.
+  Future<void> _listNotesInFolder(String path, {bool isSubDir = false}) async {
+    logger.d(('_listNotesInFolder', notesDir, path, isSubDir));
     //
-    await for (var entity in Directory('${notesDir.path}$dir').list()) {
+    await for (var entity in Directory('${notesDir.path}$path').list()) {
+      final enPath = formatPath(entity.path);
+
       if (entity is File) {
         // only process markdown files
-        if (!entity.path.endsWith('.md')) continue;
+        if (!enPath.endsWith('.md')) continue;
         try {
           Note? note = await PersistentStore.readNote(entity);
 
           if (note != null) {
-            if (isSubDir &&
-                (PrefService.getBool(ca.canShowVirtualTags) ?? false)) {
-              // note.tags.add('#' + dir.replaceAll(r'\', '/'));
-              note.tags.add('#$dir');
+            if (PrefService.boolDefault(ca.canShowVirtualTags)) {
+              note.tags.add(path.isEmpty ? '#/' : '#$path');
             }
             if (isDendronMode) {
-              var path = entity.path
-                  .substring(notesDir.path.length, entity.path.length - 3);
-              while (path.startsWith(p.separator)) {
-                path = path.substring(1);
-              }
-              note.tags.add('${path.replaceAll('.', '/')}');
+              // path without extension
+              String _p =
+                  enPath.substring(notesDir.path.length, enPath.length - 3);
+
+              // Dendron is separated by dot symbols
+              note.tags.add('Dendron$_p'.replaceAll('.', '/'));
             }
 
             allNotes.add(note);
           }
         } catch (e) {
           final note = Note();
-          note.title = 'ERROR - "$e" on parsing "${entity.path}"';
+          note.title = 'ERROR - "$e" on parsing "${enPath}"';
           note.tags = ['ERROR'];
           note.attachments = [];
 
@@ -207,24 +192,27 @@ class NotesStore {
           allNotes.add(note);
         }
       } else if (entity is Directory) {
-        final basename = p.basename(entity.path);
+        final basename = p.basename(enPath);
         if (basename.startsWith('.')) continue;
-        if (entity.path.startsWith(attachmentsDir.path)) continue;
+        if (enPath.startsWith(assetsDir.path)) continue;
 
-        await _listNotesInFolder(dir + '/' + basename, isSubDir: true);
+        await _listNotesInFolder(path + '/' + basename, isSubDir: true);
       }
     }
   }
 
   ///
-  updateTagList() {
+  void updateTagList() {
+    // reset tags
+    allTags = {};
+
     for (Note note in allNotes) {
       for (String tag in note.tags) {
         allTags.add(tag);
       }
     }
 
-    final tmpRootTags = <String>{};
+    final Set<String> tmpRootTags = {};
 
     for (String tag in allTags) {
       tmpRootTags.add(tag.split('/').first);
@@ -235,15 +223,19 @@ class NotesStore {
   }
 
   ///
-  List<String> getSubTags(String forTag) {
+  List<String> getSubTags(String tagPath) {
     Set<String> subTags =
-        allTags.where((tag) => tag.startsWith(forTag) && tag != forTag).toSet();
-
-    subTags = subTags.map((String t) => t.replaceFirst('$forTag/', '')).toSet();
-
-    subTags = subTags.map((String t) => t.split('/').first).toSet();
-
-    final subTagsList = subTags.toList();
+        allTags.where((t) => t != tagPath && t.startsWith('$tagPath/')).toSet();
+    // next level tags
+    List<String> subTagsList = subTags
+        .map((String t) {
+          t = t.replaceFirst('$tagPath/', ''); // Remove the front part
+          t = t.split('/').first;
+          return t;
+        })
+        .where((String t) => t.isNotEmpty)
+        .toSet() // Remove Duplicates
+        .toList();
 
     if (PrefService.getBool(ca.isSortTags) ?? true) {
       subTagsList.sort();
@@ -253,14 +245,13 @@ class NotesStore {
   }
 
   ///
-  filterAndSortNotes() {
+  void filterAndSortNotes() {
     //shownNotes = List.from(allNotes);
-
     shownNotes = _filterByTag(allNotes, currentTag);
 
-    if (searchText != null) {
+    if (searchText.isNotEmpty) {
       List keywords =
-          searchText!.split(' ').map((s) => s.toLowerCase()).toList();
+          searchText.split(' ').map((s) => s.toLowerCase()).toList();
 
       if (PrefService.getBool(ca.canSearchContent) ?? true) {
         List<String> toRemove = [];
@@ -341,5 +332,12 @@ class NotesStore {
         return await WebdavSync().syncFiles(this);
     } */
     return null;
+  }
+
+  ///
+  Future<void> refresh() async {
+    await listNotes();
+    filterAndSortNotes();
+    updateTagList();
   }
 }

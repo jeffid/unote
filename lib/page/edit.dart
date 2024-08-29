@@ -8,13 +8,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_info/device_info_plus.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:markd/markdown.dart' as markd;
 import 'package:markdown_toolbar/markdown_toolbar.dart';
 import 'package:path/path.dart' as p;
 import 'package:preferences/preference_service.dart';
 import 'package:rich_text_controller/rich_text_controller.dart';
-// import 'package:front_matter/front_matter.dart' as fm;
-// import 'package:markdown_toolbar/markdown_toolbar.dart';
 
 import '/constant/app.dart' as ca;
 import '/editor/character_pair.dart';
@@ -27,7 +24,6 @@ import '/store/persistent.dart';
 import '/utils/logger.dart';
 import './form/pwd_form.dart';
 import './preview.dart';
-// import '/editor/pairer.dart';
 
 ///
 class EditPage extends StatefulWidget {
@@ -528,8 +524,7 @@ class _EditPageState extends State<EditPage> {
             File newFile;
             do {
               fullFileName = i > 0 ? fileName + ' ($i)' + ext : fullFileName;
-              newFile =
-                  File(_store.attachmentsDir.path + p.separator + fullFileName);
+              newFile = File(_store.assetsDir.path + '/' + fullFileName);
 
               i++;
             } while (newFile.existsSync());
@@ -584,8 +579,7 @@ class _EditPageState extends State<EditPage> {
                         )) ??
                 false;
             if (remove) {
-              File file =
-                  File(_store.attachmentsDir.path + p.separator + attachment);
+              File file = File(_store.assetsDir.path + '/' + attachment);
               await file.delete();
               _note.attachments.remove(attachment);
             }
@@ -615,47 +609,35 @@ class _EditPageState extends State<EditPage> {
 
   ///
   Future<void> _save() async {
-    String title;
-
-    try {
-      if (!_oldText.trimLeft().startsWith('# ')) throw S.current.No_MD_title;
-
-      String markedTitle = markd.markdownToHtml(
-          RegExp(r'(?<=# ).*').stringMatch(_oldText) ?? '',
-          extensionSet: markd.ExtensionSet.gitHubWeb);
-      // print(markedTitle);
-
-      title = markedTitle.replaceAll(RegExp(r'<[^>]*>'), '').trim();
-      logger.d(title);
-    } catch (e) {
-      title = _note.title;
-    }
-    // print(title);
+    String title = mdTitle(_oldText);
+    if (title.isEmpty) title = _note.title;
 
     File? oldFile;
     if (_note.title != title && !_store.isDendronMode) {
-      if (File("${PrefService.getString(ca.notesDirectory) ?? ''}/${title}.md")
-          .existsSync()) {
+      // The file name changes as the title name changes
+      File file = File(
+          '${PrefService.stringDefault(ca.notesPath)}/${filenameFilter(title)}.md');
+      if (file.existsSync()) {
+        // File already exists, show conflict dialog
         showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-                  title: Text(S.current.Conflict),
-                  content:
-                      Text(S.current.There_is_already_a_note_with_this_title),
-                  actions: <Widget>[
-                    TextButton(
-                      child: Text(S.current.Ok),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    )
-                  ],
-                ));
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(S.current.Conflict),
+            content: Text(S.current.There_is_already_a_note_with_this_title),
+            actions: <Widget>[
+              TextButton(
+                child: Text(S.current.Ok),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            ],
+          ),
+        );
         return;
       } else {
         oldFile = _note.file;
-        _note.file = File(
-            "${PrefService.getString(ca.notesDirectory) ?? ''}/${title}.md");
+        _note.file = file;
       }
     }
 

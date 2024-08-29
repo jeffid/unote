@@ -93,7 +93,7 @@ BEGIN
             VALUE "FileDescription", "inote" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "inote" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2024 cc.waacoo. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2024 cc.cc. All rights reserved." "\0"
             VALUE "OriginalFilename", "inote.exe" "\0"
             VALUE "ProductName", "inote" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

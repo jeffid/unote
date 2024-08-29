@@ -1,9 +1,10 @@
-<img align="left" width="120" height="120" src="https://github.com/inote-flutter/inote/raw/main/assets/icon/icon-512.png" alt="App Icon">
+<img align="left" width="120" height="120" src="https://github.com/inote-flutter/inote/raw/main/assets/icon/icon-192.png" alt="App Icon">
 
 # iNote
 
 A markdown-based note-taking app for Android, iOS, macOS, Windows and Linux.
 
+![](https://img.shields.io/github/stars/inote-flutter/inote.md.svg) ![](https://img.shields.io/github/forks/inote-flutter/inote.md.svg) ![](https://img.shields.io/github/tag/inote-flutter/inote.md.svg) ![](https://img.shields.io/github/release/inote-flutter/inote.md.svg) ![](https://img.shields.io/github/issues/inote-flutter/inote.md.svg) 
 ![MIT License](https://img.shields.io/github/license/inote-flutter/inote?style=for-the-badge)
 
 ## Features

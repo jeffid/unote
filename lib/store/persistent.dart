@@ -1,13 +1,103 @@
 import 'dart:io';
+import 'dart:math';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:front_matter/front_matter.dart' as fm;
+import 'package:markd/markdown.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:preferences/preference_service.dart';
 
 import '/constant/app.dart' as ca;
 import '/model/note.dart';
 import '/utils/logger.dart';
 import '/utils/yaml.dart';
+
+///
+Future<Directory> dataDirectory() async {
+  String path = PrefService.stringDefault(ca.dataPath);
+  if (path.isEmpty) {
+    // Default file path for app initialization
+    path = p.join((await getApplicationDocumentsDirectory()).path,
+        ca.appName.toLowerCase());
+    path = formatPath(path);
+    PrefService.setString(ca.dataPath, path);
+  }
+
+  return Directory(path);
+}
+
+///
+String formatPath(String path) {
+  return (Platform.isWindows && path.indexOf(r'\') > -1)
+      ? path.replaceAll(r'\', '/')
+      : path;
+}
+
+///
+Future<String?> pickPath() async {
+  if (!await Permission.storage.request().isGranted) {
+    return null;
+  }
+
+  String path = (await FilePicker.platform.getDirectoryPath()) ?? '';
+  if (path.isNotEmpty && (await isPathWritable(path))) {
+    return formatPath(path);
+  }
+
+  if ((await Permission.storage.request()).isDenied) {
+    return null;
+  }
+
+  Directory defaultDir = await getApplicationDocumentsDirectory();
+  if (await isPathWritable(defaultDir.path)) {
+    return formatPath(defaultDir.path);
+  }
+
+  return null;
+}
+
+///
+Future<bool> isPathWritable(String? path) async {
+  final testFile = File('$path/${Random().nextInt(1000000)}');
+
+  try {
+    await testFile.create(recursive: true);
+    await testFile.writeAsString("This is only a test file, please ignore.");
+    await testFile.delete();
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
+///
+String mdTitle(String content,
+    {bool isFilename = false, bool isTrim = false, bool isHtmlStyle = true}) {
+  RegExpMatch? heading =
+      RegExp(r'^#\s+(.+?)(?=\s*$)', multiLine: true).firstMatch(content);
+  String title = heading?[1] ?? '';
+
+  if (title.isNotEmpty) {
+    if (isHtmlStyle) {
+      // format text (e.g. `:tada:` change to `🎉`)
+      title = markdownToHtml(title, extensionSet: ExtensionSet.gitHubWeb)
+          .replaceAll(RegExp(r'<[^>]*?>'), ''); // remove html tag
+    }
+
+    if (isFilename) title = filenameFilter(title);
+
+    if (isTrim) title = title.trimLeft();
+  }
+
+  return title;
+}
+
+///
+String filenameFilter(String filename) {
+  return filename.replaceAll(RegExp(r'[\/:*?"<>|]'), '');
+}
 
 ///
 class PersistentStore {
@@ -44,18 +134,22 @@ class PersistentStore {
       header = doc.data ?? {};
     }
 
-    if (header['title'] != null) {
+    // logger.d(('readNote: ', header));
+
+    // note title
+    note.title = mdTitle(fileContent);
+    if (note.title.isEmpty && header['title'] != null) {
       note.title = header['title'].toString();
-    } else {
+    }
+    if (note.title.isEmpty) {
       String title = p.basename(file.path);
       if (title.endsWith('.md')) {
-        title = title.substring(0, title.length - 3);
+        title = title.substring(0, title.length - 3); // remove extension
       }
       note.title = title;
     }
 
     // note updated time
-
     if (header['updated'] != null) {
       if (header['updated'] is int) {
         note.updated = DateTime.fromMillisecondsSinceEpoch(header['updated']);

@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:preferences/preferences.dart';
+import 'package:provider/provider.dart';
 // import 'package:quick_actions/quick_actions.dart';
 // import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
@@ -12,6 +14,7 @@ import '/constant/app.dart' as ca;
 import '/generated/l10n.dart';
 import '/main.dart';
 import '/model/note.dart';
+import '/provider/setting.dart';
 import '/store/encryption.dart';
 import '/store/notes.dart';
 import '/store/persistent.dart';
@@ -57,7 +60,9 @@ class _NoteListPageState extends State<NoteListPage> {
 
   bool searching = false;
 
-  late Directory notesDir, attachmentsDir;
+  bool _isShowSubtitle = false;
+
+  late Directory notesDir;
 
   bool _syncing = false;
 
@@ -78,6 +83,8 @@ class _NoteListPageState extends State<NoteListPage> {
       store.searchText = widget.searchText;
       searching = true;
     }
+
+    _isShowSubtitle = PrefService.boolDefault(ca.isShowSubtitle);
 
     store.init();
     _load().then((_) {
@@ -106,7 +113,7 @@ class _NoteListPageState extends State<NoteListPage> {
         //   // handleSharedText(value); todo
         //   ReceiveSharingIntent.instance.reset();
         // }, onError: (err) {
-        //   print("getLinkStream error: $err");
+        //   debugPrint("getLinkStream error: $err");
         // });
 
         // // For sharing or opening urls/text coming from outside the app while the app is closed
@@ -130,7 +137,13 @@ class _NoteListPageState extends State<NoteListPage> {
   ///
   @override
   Widget build(BuildContext context) {
-    logger.d('note_list build ===================');
+    logger.d((
+      'note_list build ===================',
+      store.allNotes.length,
+      store.shownNotes.length,
+      store.currentTag,
+      store.searchText,
+    ));
 
     return PopScope(
       canPop: false,
@@ -138,7 +151,7 @@ class _NoteListPageState extends State<NoteListPage> {
       child: Scaffold(
         appBar: _appBar(),
         body: store.shownNotes.isEmpty
-            ? LinearProgressIndicator()
+            ? Center(child: Text(S.current.Content_not_found))
             : RefreshIndicator(
                 onRefresh: () async {
                   await _load();
@@ -172,7 +185,7 @@ class _NoteListPageState extends State<NoteListPage> {
                                   ),
                                 ),
                               )
-                            : _slidableTitle(note),
+                            : _slidableItem(note),
                     ],
                   ),
                 ),
@@ -182,7 +195,7 @@ class _NoteListPageState extends State<NoteListPage> {
           onPressed: () async => _createNewNote(),
         ),
         bottomNavigationBar: _selectedNotes.isEmpty ? null : _bottomBar(),
-        drawer: store.shownNotes.isEmpty ? Container() : _drawer(),
+        drawer: _drawer(),
       ),
     );
   }
@@ -321,7 +334,7 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   ///
-  Slidable _slidableTitle(Note note) {
+  Slidable _slidableItem(Note note) {
     return Slidable(
       // class upgrade: https://github.com/letsar/flutter_slidable/wiki/Migration-from-version-0.6.0-to-version-1.0.0
       startActionPane:
@@ -416,128 +429,146 @@ class _NoteListPageState extends State<NoteListPage> {
           },
         ),
       ]),
-      child: ListTile(
-        selected: _selectedNotes.contains(note.title),
-        selectedColor: Theme.of(context).colorScheme.primary,
-        title: Text(note.title),
-        // textColor: Theme.of(context).textTheme.bodySmall?.color,
-        subtitle: store.isDendronMode
-            ? Text(note.file.path.substring(store.notesDir.path.length + 1))
-            : null,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            if (note.pinned) Icon(MdiIcons.pin),
-            if (note.favorite) Icon(MdiIcons.star),
-            if (note.encrypted)
-              note.isDecryptSuccess
-                  ? Icon(MdiIcons.lockOpen)
-                  : Icon(MdiIcons.lock),
-            // if (note.encrypted && note.isDecryptSuccess)
-            //   Icon(MdiIcons.lockOpen),
-            // if (note.encrypted && !note.isDecryptSuccess) Icon(MdiIcons.lock),
-            if (note.attachments.isNotEmpty) Icon(MdiIcons.paperclip),
-            if (note.tags.contains('color/red'))
-              Container(
-                color: Colors.red,
-                width: 5,
-              ),
-            if (note.tags.contains('color/yellow'))
-              Container(
-                color: Colors.yellow,
-                width: 5,
-              ),
-            if (note.tags.contains('color/green'))
-              Container(
-                color: Colors.green,
-                width: 5,
-              ),
-            if (note.tags.contains('color/blue'))
-              Container(
-                color: Colors.blue,
-                width: 5,
-              ),
-          ],
-        ),
-        onTap: () async {
-          if (_selectedNotes.isNotEmpty) {
-            setState(() {
-              if (_selectedNotes.contains(note.title)) {
-                _selectedNotes.remove(note.title);
-              } else {
-                _selectedNotes.add(note.title);
-              }
-            });
-            return;
-          }
-
-          //  password is required for encrypted documents
-          if (note.encrypted && !note.isDecryptSuccess) {
-            TextEditingController ctrl = TextEditingController();
-            final (cd, canRetry) = note.canRetry(false);
-
-            String pwd = await showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text(S.current.Enter_Password),
-                    content: TextField(
-                      controller: ctrl,
-                      autofocus: true,
-                      obscureText: true,
-                      readOnly: !canRetry,
-                      decoration: InputDecoration(
-                        hintText: canRetry
-                            ? S.current.Enter_Password
-                            : S.current.Please_try_again_in_cd_second(cd),
-                      ),
-                      onSubmitted: (str) {
-                        Navigator.of(context).pop(str);
-                      },
-                    ),
-                    actions: <Widget>[
-                      TextButton(
-                        child: Text(S.current.Cancel),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      TextButton(
-                        child: Text(S.current.Confirm),
-                        onPressed: canRetry
-                            ? () => Navigator.of(context).pop(ctrl.text)
-                            : null,
-                      ),
-                    ],
+      child: Consumer<SettingNotifier>(
+        builder: (context, notifier, child) {
+          return ListTile(
+            selected: _selectedNotes.contains(note.title),
+            selectedColor: Theme.of(context).colorScheme.primary,
+            title: Text(note.title, maxLines: 1),
+            subtitle: notifier.isShowSubtitle ?? _isShowSubtitle
+                ? _subtitle(note)
+                : null,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                if (note.pinned) Icon(MdiIcons.pin),
+                if (note.favorite) Icon(MdiIcons.star),
+                if (note.encrypted)
+                  note.isDecryptSuccess
+                      ? Icon(MdiIcons.lockOpen)
+                      : Icon(MdiIcons.lock),
+                if (note.attachments.isNotEmpty) Icon(MdiIcons.paperclip),
+                if (note.tags.contains('color/red'))
+                  Container(
+                    color: Colors.red,
+                    width: 5,
                   ),
-                ) ??
-                '';
-            if (pwd.isNotEmpty) {
-              note.encryption = Encryption(key: pwd);
-            } else {
-              return;
-            }
-          }
-
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => EditPage(
-                note,
-                store,
-              ),
+                if (note.tags.contains('color/yellow'))
+                  Container(
+                    color: Colors.yellow,
+                    width: 5,
+                  ),
+                if (note.tags.contains('color/green'))
+                  Container(
+                    color: Colors.green,
+                    width: 5,
+                  ),
+                if (note.tags.contains('color/blue'))
+                  Container(
+                    color: Colors.blue,
+                    width: 5,
+                  ),
+              ],
             ),
+            onTap: () async {
+              if (_selectedNotes.isNotEmpty) {
+                setState(() {
+                  if (_selectedNotes.contains(note.title)) {
+                    _selectedNotes.remove(note.title);
+                  } else {
+                    _selectedNotes.add(note.title);
+                  }
+                });
+                return;
+              }
+              //  password is required for encrypted documents
+              if (note.encrypted && !note.isDecryptSuccess) {
+                TextEditingController ctrl = TextEditingController();
+                final (cd, canRetry) = note.canRetry(false);
+
+                String pwd = await showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text(S.current.Enter_Password),
+                        content: TextField(
+                          controller: ctrl,
+                          autofocus: true,
+                          obscureText: true,
+                          readOnly: !canRetry,
+                          decoration: InputDecoration(
+                            hintText: canRetry
+                                ? S.current.Enter_Password
+                                : S.current.Please_try_again_in_cd_second(cd),
+                          ),
+                          onSubmitted: (str) {
+                            Navigator.of(context).pop(str);
+                          },
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            child: Text(S.current.Cancel),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: Text(S.current.Confirm),
+                            onPressed: canRetry
+                                ? () => Navigator.of(context).pop(ctrl.text)
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ) ??
+                    '';
+                if (pwd.isNotEmpty) {
+                  note.encryption = Encryption(key: pwd);
+                } else {
+                  return;
+                }
+              }
+
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => EditPage(
+                    note,
+                    store,
+                  ),
+                ),
+              );
+              _filterAndSortNotes();
+            },
+            onLongPress: () {
+              setState(() {
+                if (_selectedNotes.contains(note.title)) {
+                  _selectedNotes.remove(note.title);
+                } else {
+                  _selectedNotes.add(note.title);
+                }
+              });
+            },
           );
-          _filterAndSortNotes();
-        },
-        onLongPress: () {
-          setState(() {
-            if (_selectedNotes.contains(note.title)) {
-              _selectedNotes.remove(note.title);
-            } else {
-              _selectedNotes.add(note.title);
-            }
-          });
         },
       ),
+    );
+  }
+
+  ///
+  Widget _subtitle(Note note) {
+    logger.d(('subtitle', note.tags));
+    String path = note.file.path.substring(store.notesDir.path.length + 1);
+    String tag = note.tags
+        .where((t) => !t.startsWith('#/') && !t.startsWith('Dendron/'))
+        .toList()
+        .join(', ');
+
+    return AutoSizeText(
+      '  ${formatPath(path)} | $tag',
+      style: TextStyle(
+          fontSize: 13, color: Colors.grey, fontStyle: FontStyle.italic),
+      minFontSize: 9,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -707,7 +738,7 @@ class _NoteListPageState extends State<NoteListPage> {
                                   '';
 
                               if (newTag.isNotEmpty) {
-                                print('ADD');
+                                // debugPrint('ADD');
                                 await _modifyAll((Note note) async {
                                   note.tags.add(newTag);
                                   PersistentStore.saveNoteHeader(note);
@@ -759,7 +790,7 @@ class _NoteListPageState extends State<NoteListPage> {
                                         ],
                                       ));
                               if (tagToRemove.isNotEmpty) {
-                                // print('REMOVE');
+                                // debugPrint('REMOVE');
                                 await _modifyAll(
                                   (Note note) async {
                                     note.tags.remove(tagToRemove);
@@ -1040,12 +1071,7 @@ class _NoteListPageState extends State<NoteListPage> {
 
   ///
   Future _load() async {
-    print('LOAD');
-    await store.listNotes();
-
-    store.updateTagList();
-
-    store.filterAndSortNotes();
+    await store.refresh();
 
     setState(() {});
   }
@@ -1063,8 +1089,8 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   ///
-  Future _refresh() async {
-    print('REFRESH');
+  Future<void> _refresh() async {
+    debugPrint('REFRESH');
     if (store.syncMethod.isEmpty) {
       await _load();
     } else {
@@ -1093,14 +1119,9 @@ class _NoteListPageState extends State<NoteListPage> {
         _syncing = false;
       });
 
-      await store.listNotes();
+      await store.refresh();
 
-      store.updateTagList();
-
-      store.filterAndSortNotes();
-
-      if (!mounted) return;
-      setState(() {});
+      if (mounted) setState(() {});
     }
   }
 
@@ -1171,12 +1192,10 @@ class _TagDropdownState extends State<TagDropdown> {
   @override
   void initState() {
     super.initState();
+    _hasSubTags = widget.hasSubTags != null
+        ? widget.hasSubTags!
+        : store.getSubTags(widget.tag).length > 0;
 
-    if (widget.hasSubTags == null) {
-      _hasSubTags = store.getSubTags(widget.tag).length > 0;
-    } else {
-      _hasSubTags = widget.hasSubTags as bool;
-    }
     _isSelected = store.currentTag == widget.tag;
     _folded = widget.foldedByDefault;
     if (store.currentTag.startsWith(widget.tag)) _folded = false;

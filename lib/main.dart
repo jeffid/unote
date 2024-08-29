@@ -1,7 +1,7 @@
 // @dart=3.4
 
 import 'package:flutter/material.dart';
-import 'package:inote/page/screen_lock.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:preferences/preference_service.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -11,8 +11,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import '/constant/app.dart' as ca;
 import '/generated/l10n.dart';
 import '/page/note_list.dart';
+import '/provider/setting.dart';
 import '/provider/theme.dart';
-// import '/utils/logger.dart';
+import '/utils/logger.dart';
+import './page/screen_lock.dart';
 
 bool isPreviewFeatureEnabled = true;
 
@@ -34,20 +36,33 @@ main() async {
   Intl.defaultLocale =
       ca.supportedLang.contains(lang) ? lang : ca.supportedLang.first;
   // Intl.defaultLocale = 'en_US';
-  
+
+  logger.d((
+    // await getExternalStorageDirectory(),
+    await getApplicationDocumentsDirectory(),
+  ));
+
   runApp(
     AppInfo(
-      data: await AppInfoData.get(),
-      child: ChangeNotifierProvider<ThemeNotifier>(
-        create: (_) => ThemeNotifier(),
-        child: App(),
-      ),
-    ),
+        data: await AppInfoData.get(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ThemeNotifier>(
+                create: (_) => ThemeNotifier()),
+            ChangeNotifierProvider<SettingNotifier>(
+                create: (_) => SettingNotifier()),
+          ],
+          child: App(),
+        )
+        // ChangeNotifierProvider<ThemeNotifier>(
+        //   create: (_) => ThemeNotifier(),
+        //   child: App(),
+        // ),
+        ),
   );
 }
 
 class App extends StatelessWidget {
-  
   ///
   @override
   Widget build(BuildContext context) {
@@ -60,10 +75,8 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: ca.appName,
       theme: themeData,
-      // home: NoteListPage(isFirst: true),
-      home: hasLock
-          ? ScreenLockPage(isFirst: true)
-          : NoteListPage(isFirst: true),
+      home:
+          hasLock ? ScreenLockPage(isFirst: true) : NoteListPage(isFirst: true),
       debugShowCheckedModeBanner: false,
       navigatorKey: navKey,
       localizationsDelegates: [

@@ -70,7 +70,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "Confirm_Password":
             MessageLookupByLibrary.simpleMessage("Confirm Password"),
         "Conflict": MessageLookupByLibrary.simpleMessage("Conflict"),
+        "Content_not_found":
+            MessageLookupByLibrary.simpleMessage("Content not found"),
         "Dark": MessageLookupByLibrary.simpleMessage("Dark"),
+        "Data": MessageLookupByLibrary.simpleMessage("Data"),
         "Data_Directory":
             MessageLookupByLibrary.simpleMessage("Data Directory"),
         "Decryption_Failed":
@@ -118,6 +121,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Language": MessageLookupByLibrary.simpleMessage("Language"),
         "Light": MessageLookupByLibrary.simpleMessage("Light"),
         "Location": MessageLookupByLibrary.simpleMessage("Location"),
+        "Main_Page": MessageLookupByLibrary.simpleMessage("Main Page"),
         "More": MessageLookupByLibrary.simpleMessage("More"),
         "Move_to_trash": MessageLookupByLibrary.simpleMessage("Move to trash"),
         "NONE": MessageLookupByLibrary.simpleMessage("NONE"),
@@ -174,6 +178,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Set_the_screen_lock_duration": MessageLookupByLibrary.simpleMessage(
             "Set the screen lock duration"),
         "Settings": MessageLookupByLibrary.simpleMessage("Settings"),
+        "Show_subtitle": MessageLookupByLibrary.simpleMessage("Show subtitle"),
         "Show_virtual_tags":
             MessageLookupByLibrary.simpleMessage("Show virtual tags"),
         "Sort_by_Created_Date":
@@ -188,6 +193,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "Sync": MessageLookupByLibrary.simpleMessage("Sync"),
         "Sync_Error": MessageLookupByLibrary.simpleMessage("Sync Error"),
         "Tags": MessageLookupByLibrary.simpleMessage("Tags"),
+        "The_subtitle_contains_the_file_name_and_tags":
+            MessageLookupByLibrary.simpleMessage(
+                "The subtitle contains the file name and tags"),
         "Theme": MessageLookupByLibrary.simpleMessage("Theme"),
         "There_is_already_a_note_with_this_title":
             MessageLookupByLibrary.simpleMessage(

@@ -219,6 +219,16 @@
     "@This_will_delete_it_permanently": {},
     "Never": "Never",
     "@Never": {},
+    "Data": "Data",
+    "@Data": {},  
+    "Main_Page": "Main Page",
+    "@Main_Page": {},
+    "Show_subtitle": "Show subtitle",
+    "@Show_subtitle": {},
+    "The_subtitle_contains_the_file_name_and_tags": "The subtitle contains the file name and tags",
+    "@The_subtitle_contains_the_file_name_and_tags": {},
+    "Content_not_found": "Content not found",
+    "@Content_not_found": {},
     "minutes": "{num} minutes",
     "@minutes": {
         "placeholders": {

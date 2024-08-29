@@ -52,7 +52,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("以子文件夹名作为虚拟标签"),
         "All_Notes": MessageLookupByLibrary.simpleMessage("全部文档"),
         "Auto_Save": MessageLookupByLibrary.simpleMessage("自动保存"),
-        "Automatic_list_mark": MessageLookupByLibrary.simpleMessage("自动添加序列符号"),
+        "Automatic_list_mark":
+            MessageLookupByLibrary.simpleMessage("启用自动添加序列符号"),
         "Back": MessageLookupByLibrary.simpleMessage("返回"),
         "Black_AMOLED": MessageLookupByLibrary.simpleMessage("黑色 / AMOLED"),
         "Cancel": MessageLookupByLibrary.simpleMessage("取消"),
@@ -63,8 +64,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "Confirm": MessageLookupByLibrary.simpleMessage("确定"),
         "Confirm_Password": MessageLookupByLibrary.simpleMessage("确认密码"),
         "Conflict": MessageLookupByLibrary.simpleMessage("冲突"),
+        "Content_not_found": MessageLookupByLibrary.simpleMessage("暂无内容"),
         "Dark": MessageLookupByLibrary.simpleMessage("暗色"),
-        "Data_Directory": MessageLookupByLibrary.simpleMessage("存储文件夹"),
+        "Data": MessageLookupByLibrary.simpleMessage("数据"),
+        "Data_Directory": MessageLookupByLibrary.simpleMessage("数据文件夹"),
         "Decryption_Failed": MessageLookupByLibrary.simpleMessage("解密失败"),
         "Delete": MessageLookupByLibrary.simpleMessage("删除"),
         "Delete_Attachment": MessageLookupByLibrary.simpleMessage("删除附件"),
@@ -98,6 +101,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Language": MessageLookupByLibrary.simpleMessage("语言"),
         "Light": MessageLookupByLibrary.simpleMessage("亮色"),
         "Location": MessageLookupByLibrary.simpleMessage("位置"),
+        "Main_Page": MessageLookupByLibrary.simpleMessage("主页"),
         "More": MessageLookupByLibrary.simpleMessage("更多"),
         "Move_to_trash": MessageLookupByLibrary.simpleMessage("丢弃到回收站"),
         "NONE": MessageLookupByLibrary.simpleMessage("撤选"),
@@ -146,8 +150,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "Set_the_screen_lock_duration":
             MessageLookupByLibrary.simpleMessage("设置屏锁间隔时间"),
         "Settings": MessageLookupByLibrary.simpleMessage("设置"),
-        "Show_virtual_tags":
-            MessageLookupByLibrary.simpleMessage("Show virtual tags"),
+        "Show_subtitle": MessageLookupByLibrary.simpleMessage("显示副标题"),
+        "Show_virtual_tags": MessageLookupByLibrary.simpleMessage("显示虚拟标签"),
         "Sort_by_Created_Date": MessageLookupByLibrary.simpleMessage("按创建日期排序"),
         "Sort_by_Title": MessageLookupByLibrary.simpleMessage("按标题排序"),
         "Sort_by_Updated_Date": MessageLookupByLibrary.simpleMessage("按更新日期排序"),
@@ -157,6 +161,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "Sync": MessageLookupByLibrary.simpleMessage("同步"),
         "Sync_Error": MessageLookupByLibrary.simpleMessage("同步出错"),
         "Tags": MessageLookupByLibrary.simpleMessage("标签"),
+        "The_subtitle_contains_the_file_name_and_tags":
+            MessageLookupByLibrary.simpleMessage("副标题包含文件名和标签"),
         "Theme": MessageLookupByLibrary.simpleMessage("主题"),
         "There_is_already_a_note_with_this_title":
             MessageLookupByLibrary.simpleMessage("该标题已存在"),
@@ -175,7 +181,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Untitled": MessageLookupByLibrary.simpleMessage("未命名"),
         "Use_Mode_Switcher": MessageLookupByLibrary.simpleMessage("启用显示模式切换开关"),
         "Use_external_storage":
-            MessageLookupByLibrary.simpleMessage("使用指定存储文件夹"),
+            MessageLookupByLibrary.simpleMessage("使用指定数据文件夹"),
         "countSelectedNotes": m6,
         "en": MessageLookupByLibrary.simpleMessage("English"),
         "minutes": m7,

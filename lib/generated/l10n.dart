@@ -1140,6 +1140,56 @@ class S {
     );
   }
 
+  /// `Data`
+  String get Data {
+    return Intl.message(
+      'Data',
+      name: 'Data',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Main Page`
+  String get Main_Page {
+    return Intl.message(
+      'Main Page',
+      name: 'Main_Page',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show subtitle`
+  String get Show_subtitle {
+    return Intl.message(
+      'Show subtitle',
+      name: 'Show_subtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The subtitle contains the file name and tags`
+  String get The_subtitle_contains_the_file_name_and_tags {
+    return Intl.message(
+      'The subtitle contains the file name and tags',
+      name: 'The_subtitle_contains_the_file_name_and_tags',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Content not found`
+  String get Content_not_found {
+    return Intl.message(
+      'Content not found',
+      name: 'Content_not_found',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `{num} minutes`
   String minutes(Object num) {
     return Intl.message(

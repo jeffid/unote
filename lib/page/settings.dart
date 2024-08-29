@@ -1,21 +1,19 @@
 import 'dart:io';
-import 'dart:math';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:inote/provider/setting.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:preferences/preferences.dart';
 import 'package:provider/provider.dart';
 
 import '/constant/app.dart' as ca;
 import '/main.dart';
 import '/generated/l10n.dart';
-// import '/utils/logger.dart';
+import '/utils/logger.dart';
 import '/provider/theme.dart';
 import '/store/encryption.dart';
 import '/store/notes.dart';
+import '/store/persistent.dart';
 import './form/pwd_form.dart';
 import './screen_lock.dart';
 
@@ -242,109 +240,60 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
 
         /// Data Directory
-        if (Platform.isAndroid) ...[
-          PreferenceTitle(S.current.Data_Directory),
-          SwitchPreference(
-            S.current.Use_external_storage,
-            ca.isExternalDirectoryEnabled,
-            onChange: () async {
-              if (PrefService.getString(ca.externalDirectory) == null) {
-                PrefService.setString(ca.externalDirectory,
-                    (await getExternalStorageDirectory())!.path);
-              }
+        PreferenceTitle(S.current.Data),
+        ListTile(
+          title: Text(S.current.Location),
+          subtitle: Text(PrefService.stringDefault(ca.dataPath)),
+          onTap: () async {
+            final String? path = await pickPath();
+            if (path == null) return;
 
-              await store.listNotes();
-              await store.filterAndSortNotes();
-              await store.updateTagList();
-
-              if (mounted) setState(() {});
-            },
-          ),
-          PreferenceHider(
-            [
-              ListTile(
-                title: Text(S.current.Location),
-                subtitle: Text(
-                  PrefService.getString(ca.externalDirectory) ?? '',
-                ),
-                onTap: () async {
-                  Directory dir;
-
-                  final dirStr = await _pickExternalDir();
-
-                  if (dirStr == null) {
-                    return;
-                  }
-
-                  dir = Directory(dirStr);
-
-                  if (dir.existsSync()) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
+            Directory dir = Directory(path);
+            if (dir.existsSync()) {
+              showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    return PopScope(
+                      canPop: false,
+                      child: AlertDialog(
                         title: ListTile(
                           leading: CircularProgressIndicator(),
                           title: Text('Processing files...'),
                         ),
                       ),
-                      barrierDismissible: false,
                     );
-                    PrefService.setString(ca.externalDirectory, dir.path);
+                  });
 
-                    await store.listNotes();
-                    await store.filterAndSortNotes();
-                    await store.updateTagList();
-                    setState(() {});
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
-            ],
-            ca.isExternalDirectoryDisabled,
-          ),
-        ],
+              // set selected directory path
+              PrefService.setString(ca.dataPath, dir.path);
 
-        /// Editor
-        PreferenceTitle(S.current.Editor),
-        SwitchPreference(
-          S.current.Auto_Save,
-          ca.canAutoSave,
-          activeColor: accentColor,
-          inactiveThumbColor: accentColor,
-        ),
-        SwitchPreference(
-          S.current.Use_Mode_Switcher,
-          ca.canShowModeSwitcher,
-          activeColor: accentColor,
-          inactiveThumbColor: accentColor,
-        ),
-        SwitchPreference(
-          S.current.Pair_Quotes,
-          ca.canPairMark,
-          activeColor: accentColor,
-          inactiveThumbColor: accentColor,
+              await store.refresh();
+              setState(() {});
+              Navigator.of(context).pop();
+            }
+          },
         ),
 
-        /// Search
-        PreferenceTitle(S.current.Search),
+        /// Main Page
+        PreferenceTitle(S.current.Main_Page),
         SwitchPreference(
           S.current.Search_content_of_notes,
           ca.canSearchContent,
           activeColor: accentColor,
           inactiveThumbColor: accentColor,
         ),
-
-        /// Tags
-        PreferenceTitle(S.current.Tags),
         SwitchPreference(
-          S.current.Sort_tags_alphabetically_in_the_sidebar,
-          ca.isSortTags,
+          S.current.Show_subtitle,
+          ca.isShowSubtitle,
+          desc: S.current.The_subtitle_contains_the_file_name_and_tags,
           activeColor: accentColor,
           inactiveThumbColor: accentColor,
+          onChange: () {
+            Provider.of<SettingNotifier>(context, listen: false)
+                .isShowSubtitle = PrefService.boolDefault(ca.isShowSubtitle);
+          },
         ),
-
-        /// More
-        PreferenceTitle(S.current.More),
         ListTile(
           title: Text(S.current.Recreate_tutorial_notes),
           onTap: () async {
@@ -370,27 +319,29 @@ class _SettingsPageState extends State<SettingsPage> {
                         )) ??
                 false) {
               await store.createTutorialNotes();
-              await store.createTutorialAttachments();
-              await store.listNotes();
-              await store.filterAndSortNotes();
-              await store.updateTagList();
+              // await store.createTutorialAssets();
+              await store.refresh();
             }
           },
         ),
 
-        /// Experimental
-        PreferenceTitle(S.current.Experimental),
+        /// Editor
+        PreferenceTitle(S.current.Editor),
         SwitchPreference(
-          S.current.Enable_Dendron_support,
-          ca.isDendronMode,
-          desc: S.current.Dendron_is_a_VSCodeBased_NoteTaking_tool,
-          onChange: () async {
-            await store.listNotes();
-            await store.filterAndSortNotes();
-            await store.updateTagList();
-
-            if (mounted) setState(() {});
-          },
+          S.current.Auto_Save,
+          ca.canAutoSave,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+        ),
+        SwitchPreference(
+          S.current.Use_Mode_Switcher,
+          ca.canShowModeSwitcher,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+        ),
+        SwitchPreference(
+          S.current.Pair_Quotes,
+          ca.canPairMark,
           activeColor: accentColor,
           inactiveThumbColor: accentColor,
         ),
@@ -402,11 +353,35 @@ class _SettingsPageState extends State<SettingsPage> {
           activeColor: accentColor,
           inactiveThumbColor: accentColor,
         ),
+
+        /// Tags
+        PreferenceTitle(S.current.Tags),
+        SwitchPreference(
+          S.current.Sort_tags_alphabetically_in_the_sidebar,
+          ca.isSortTags,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+        ),
         SwitchPreference(
           S.current.Show_virtual_tags,
           ca.canShowVirtualTags,
           desc:
               S.current.Adds_a_virtual_tag_to_notes_which_are_in_a_subdirectory,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+        ),
+
+        /// Experimental
+        PreferenceTitle(S.current.Experimental),
+        SwitchPreference(
+          S.current.Enable_Dendron_support,
+          ca.isDendronMode,
+          desc: S.current.Dendron_is_a_VSCodeBased_NoteTaking_tool,
+          onChange: () async {
+            await store.refresh();
+
+            if (mounted) setState(() {});
+          },
           activeColor: accentColor,
           inactiveThumbColor: accentColor,
         ),
@@ -480,43 +455,5 @@ class _SettingsPageState extends State<SettingsPage> {
         // ),
       ]),
     );
-  }
-
-  ///
-  Future<String?> _pickExternalDir() async {
-    if (!await Permission.storage.request().isGranted) {
-      return null;
-    }
-
-    var dir = await FilePicker.platform.getDirectoryPath();
-    if ((dir ?? '').isNotEmpty) {
-      if (await _checkIfDirectoryIsWritable(dir!)) {
-        return dir;
-      }
-    }
-
-    if ((await Permission.storage.request()).isDenied) {
-      return null;
-    }
-
-    var externalDir = await getExternalStorageDirectory();
-    if (await _checkIfDirectoryIsWritable(externalDir?.path)) {
-      return externalDir?.path;
-    }
-    return null;
-  }
-
-  ///
-  Future<bool> _checkIfDirectoryIsWritable(String? path) async {
-    final testFile = File('$path/${Random().nextInt(1000000)}');
-
-    try {
-      await testFile.create(recursive: true);
-      await testFile.writeAsString("This is only a test file, please ignore.");
-      await testFile.delete();
-    } catch (e) {
-      return false;
-    }
-    return true;
   }
 }
