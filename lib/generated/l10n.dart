@@ -1190,6 +1190,26 @@ class S {
     );
   }
 
+  /// `Create note`
+  String get Create_note {
+    return Intl.message(
+      'Create note',
+      name: 'Create_note',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Received text`
+  String get Received_text {
+    return Intl.message(
+      'Received text',
+      name: 'Received_text',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `{num} minutes`
   String minutes(Object num) {
     return Intl.message(

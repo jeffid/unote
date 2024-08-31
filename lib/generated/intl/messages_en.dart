@@ -72,6 +72,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Conflict": MessageLookupByLibrary.simpleMessage("Conflict"),
         "Content_not_found":
             MessageLookupByLibrary.simpleMessage("Content not found"),
+        "Create_note": MessageLookupByLibrary.simpleMessage("Create note"),
         "Dark": MessageLookupByLibrary.simpleMessage("Dark"),
         "Data": MessageLookupByLibrary.simpleMessage("Data"),
         "Data_Directory":
@@ -154,6 +155,7 @@ class MessageLookup extends MessageLookupByLibrary {
                 "Please set the screen lock passcode"),
         "Please_try_again_in_cd_second": m5,
         "Preview": MessageLookupByLibrary.simpleMessage("Preview"),
+        "Received_text": MessageLookupByLibrary.simpleMessage("Received text"),
         "Recreate": MessageLookupByLibrary.simpleMessage("Recreate"),
         "Recreate_tutorial_notes":
             MessageLookupByLibrary.simpleMessage("Recreate tutorial notes"),

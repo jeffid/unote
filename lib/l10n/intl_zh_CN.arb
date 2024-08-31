@@ -229,11 +229,15 @@
   "@The_subtitle_contains_the_file_name_and_tags": {},
   "Content_not_found": "暂无内容",
   "@Content_not_found": {},
+  "Create_note": "新建文档",
+  "@Create_note": {},
+  "Received_text": "接收的文本",
+  "@Received_text": {},
   "minutes": "{num} 分钟",
   "@minutes": {
-      "placeholders": {
-          "num": {}
-      }
+    "placeholders": {
+      "num": {}
+    }
   },
   "Please_enter_digits": "请输入 {len} 位纯数字字符",
   "@Please_enter_digits": {
@@ -241,7 +245,7 @@
       "len": {}
     }
   },
-"Please_enter_characters": "请输入 {min} 至 {max} 位的字符",
+  "Please_enter_characters": "请输入 {min} 至 {max} 位的字符",
   "@Please_enter_characters": {
     "placeholders": {
       "min": {},

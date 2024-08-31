@@ -65,6 +65,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Confirm_Password": MessageLookupByLibrary.simpleMessage("确认密码"),
         "Conflict": MessageLookupByLibrary.simpleMessage("冲突"),
         "Content_not_found": MessageLookupByLibrary.simpleMessage("暂无内容"),
+        "Create_note": MessageLookupByLibrary.simpleMessage("新建文档"),
         "Dark": MessageLookupByLibrary.simpleMessage("暗色"),
         "Data": MessageLookupByLibrary.simpleMessage("数据"),
         "Data_Directory": MessageLookupByLibrary.simpleMessage("数据文件夹"),
@@ -129,6 +130,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("请设置屏锁密码"),
         "Please_try_again_in_cd_second": m5,
         "Preview": MessageLookupByLibrary.simpleMessage("预览"),
+        "Received_text": MessageLookupByLibrary.simpleMessage("接收的文本"),
         "Recreate": MessageLookupByLibrary.simpleMessage("重建"),
         "Recreate_tutorial_notes":
             MessageLookupByLibrary.simpleMessage("重建教程文档"),

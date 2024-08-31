@@ -3,12 +3,13 @@ import 'dart:io';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:preferences/preferences.dart';
 import 'package:provider/provider.dart';
-// import 'package:quick_actions/quick_actions.dart';
-// import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:quick_actions/quick_actions.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import '/constant/app.dart' as ca;
 import '/generated/l10n.dart';
@@ -21,7 +22,6 @@ import '/store/persistent.dart';
 import '/utils/logger.dart';
 import './about.dart';
 import './edit.dart';
-// import './screen_lock.dart';
 import './settings.dart';
 
 ///
@@ -39,12 +39,22 @@ class NoteListPage extends StatefulWidget {
   /// is the first page
   final bool isFirst;
 
-  static show(BuildContext context,
-      {String tag = '', String search = '', bool isFirst = false}) {
-    Navigator.of(context).push(MaterialPageRoute(
+  static void show(BuildContext context,
+      {String tag = '',
+      String search = '',
+      bool isFirst = false,
+      bool isReplace = false}) {
+    final route = MaterialPageRoute(
       builder: (context) =>
           NoteListPage(filterTag: tag, searchText: search, isFirst: isFirst),
-    ));
+    );
+    if (isReplace) {
+      // Replace the current page
+      Navigator.pushReplacement(context, route);
+    } else {
+      // Push a new page
+      Navigator.of(context).push(route);
+    }
   }
 
   ///
@@ -68,9 +78,9 @@ class _NoteListPageState extends State<NoteListPage> {
 
   Set<String> _selectedNotes = {};
 
-  // late StreamSubscription _intentDataStreamSubscription;
-  // late StreamSubscription _intentSub;
-  // final _sharedFiles = <SharedMediaFile>[];
+  StreamSubscription? _streamSub;
+
+  final List<SharedMediaFile> _sharedFiles = [];
 
   @override
   void initState() {
@@ -87,41 +97,13 @@ class _NoteListPageState extends State<NoteListPage> {
     _isShowSubtitle = PrefService.boolDefault(ca.isShowSubtitle);
 
     store.init();
+
     _load().then((_) {
-      if (widget.isFirst) {
-        // todo MissingPluginException(No implementation found for method getLaunchAction on channel plugins.flutter.io/quick_actions)
-        // final quickActions = QuickActions();
-        // quickActions.initialize((shortcutType) {
-        //   if (shortcutType == 'action_create_note') {
-        //     createNewNote();
-        //   }
-        // });
-        // quickActions.setShortcutItems(<ShortcutItem>[
-        //   const ShortcutItem(
-        //       type: 'action_create_note',
-        //       localizedTitle: 'Create note',
-        //       icon: 'ic_shortcut_add'),
-        // ]);
+      if (!widget.isFirst || !appInfo.platform.isMobile) return;
 
-        //todo [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled Exception: MissingPluginException(No implementation found for method getInitialMedia on channel receive_sharing_intent/messages)
-        // // For sharing or opening urls/text coming from outside the app while the app is in the memory
-        // _intentSub =
-        //     ReceiveSharingIntent.instance.getMediaStream().listen((value) {
-        //   _sharedFiles.clear();
-        //   _sharedFiles.addAll(value);
+      _quickAction();
 
-        //   // handleSharedText(value); todo
-        //   ReceiveSharingIntent.instance.reset();
-        // }, onError: (err) {
-        //   debugPrint("getLinkStream error: $err");
-        // });
-
-        // // For sharing or opening urls/text coming from outside the app while the app is closed
-        // ReceiveSharingIntent.instance.getInitialMedia().then<void>((value) {
-        //   // handleSharedText(value ?? ''); todo
-        //   ReceiveSharingIntent.instance.reset();
-        // });
-      }
+      _receiveSharing();
     });
 
     super.initState();
@@ -130,7 +112,8 @@ class _NoteListPageState extends State<NoteListPage> {
   ///
   @override
   void dispose() {
-    // _intentSub.cancel();
+    _streamSub?.cancel();
+
     super.dispose();
   }
 
@@ -987,31 +970,6 @@ class _NoteListPageState extends State<NoteListPage> {
       ),
     );
   }
-  // handleSharedText(String value) {
-  //   if (value.isEmpty) return;
-
-  //   showDialog(
-  //       context: context,
-  //       builder: (context) => AlertDialog(
-  //             title: Text('Received text'),
-  //             content:
-  //                 Scrollbar(child: SingleChildScrollView(child: Text(value))),
-  //             actions: [
-  //               TextButton(
-  //                   onPressed: () {
-  //                     Navigator.of(context).pop();
-  //                   },
-  //                   child: Text('Cancel')),
-  //               // TextButton(onPressed: () {}, child: Text('Append to note')),
-  //               TextButton(
-  //                   onPressed: () {
-  //                     Navigator.of(context).pop();
-  //                     createNewNote(value);
-  //                   },
-  //                   child: Text('Create new note')),
-  //             ],
-  //           ));
-  // }
 
   ///
   void _deselectAllNotes() {
@@ -1029,7 +987,7 @@ class _NoteListPageState extends State<NoteListPage> {
       return;
     }
 
-    var shouldPop = false;
+    bool shouldPop = false;
     if (_selectedNotes.isNotEmpty) {
       _deselectAllNotes();
       shouldPop = false;
@@ -1056,6 +1014,12 @@ class _NoteListPageState extends State<NoteListPage> {
                     ],
                   )) ??
           false;
+
+      if (shouldPop) {
+        // exit app
+        SystemNavigator.pop();
+        return;
+      }
     }
 
     if (context.mounted && shouldPop) {
@@ -1142,11 +1106,91 @@ class _NoteListPageState extends State<NoteListPage> {
     // _filterAndSortNotes();
   }
 
-  /* _setFilterTagAndRefresh(BuildContext context, String tag) {
-    Navigator.of(context).pop();
-    store.currentTag = tag;
-    _filterAndSortNotes();
-  } */
+  ///
+  void _quickAction() {
+    final quickActions = QuickActions();
+    quickActions.initialize((type) {
+      if (type == 'action_create_note') {
+        _createNewNote();
+      }
+    });
+    quickActions.setShortcutItems(<ShortcutItem>[
+      ShortcutItem(
+        type: 'action_create_note',
+        localizedTitle: S.current.Create_note,
+        icon: 'ic_shortcut_add',
+      ),
+    ]);
+  }
+
+  ///
+  void _receiveSharing() {
+    // For sharing or opening urls/text coming from outside the app while the app is in the memory
+    _streamSub = ReceiveSharingIntent.instance.getMediaStream().listen((v) {
+      _sharedFiles.clear();
+      _sharedFiles.addAll(v);
+      logger.d((
+        'getMediaStream',
+        _sharedFiles.map((f) {
+          var m = f.toMap();
+          m['content'] = readAsString(m['path']);
+          snackBar(context, m.toString());
+          return m;
+        }),
+      ));
+
+      // _handleSharedText(v);
+      ReceiveSharingIntent.instance.reset();
+    }, onError: (err) {
+      debugPrint("getMediaStream error: $err");
+    });
+
+    // For sharing or opening urls/text coming from outside the app while the app is closed
+    ReceiveSharingIntent.instance.getInitialMedia().then<void>((v) {
+      _sharedFiles.clear();
+      _sharedFiles.addAll(v);
+      logger.d((
+        'getInitialMedia',
+        _sharedFiles.map((f) {
+          var m = f.toMap();
+          m['content'] = readAsString(m['path']);
+          snackBar(context, m.toString());
+          return m;
+        }),
+      ));
+
+      // _handleSharedText(v ?? '');
+      ReceiveSharingIntent.instance.reset();
+    });
+  }
+
+  ///
+  _handleSharedText(String v) {
+    if (v.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(S.current.Received_text),
+        content: Scrollbar(child: SingleChildScrollView(child: Text(v))),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text(S.current.Cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _createNewNote(v);
+            },
+            child: Text(S.current.Create_note),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 ///

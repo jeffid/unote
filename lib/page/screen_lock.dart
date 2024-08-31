@@ -19,7 +19,7 @@ void scLock({bool isCheckDuration = true}) {
     int minute = PrefService.intDefault(ca.screenLockDuration);
     if (minute > 0) {
       // Timer(Duration(seconds: 8), () {
-        Timer(Duration(minutes: minute), () {
+      Timer(Duration(minutes: minute), () {
         _screenLock();
       });
     }
@@ -38,16 +38,13 @@ void _screenLock() {
   if (pwd.isEmpty) return;
 
   showDialog(
-      context: context,
-      // barrierColor: themeData.dividerColor,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return PopScope(
-          canPop: false,
-          onPopInvoked: (bool didPop) async {},
-          child: ScreenLockPage(),
-        );
-      });
+    context: context,
+    // barrierColor: themeData.dividerColor,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return PopScope(canPop: false, child: ScreenLockPage());
+    },
+  );
 
   // showModalBottomSheet(
   //   context: context,
@@ -81,7 +78,7 @@ class ScreenLockPage extends StatefulWidget {
   /// is the first page
   final bool isFirst;
 
-  static show(BuildContext context, {bool isFirst = false}) {
+  static void show(BuildContext context, {bool isFirst = false}) {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (context) => ScreenLockPage(isFirst: isFirst),
     ));
@@ -226,7 +223,7 @@ class _ScreenLockPageState extends State<ScreenLockPage> {
   ///
   void _nav(bool isFirst) {
     isFirst
-        ? NoteListPage.show(context, isFirst: true)
+        ? NoteListPage.show(context, isFirst: true, isReplace: true)
         : Navigator.pop(context);
   }
 }

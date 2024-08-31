@@ -100,6 +100,16 @@ String filenameFilter(String filename) {
 }
 
 ///
+String? readAsString(String path){
+  try {
+    return File(path).readAsStringSync();
+  } catch (e) {
+    logger.e('readAsString error: $e');
+    return null;
+  }
+}
+
+///
 class PersistentStore {
   static bool get isDendronMode =>
       (PrefService.getBool(ca.isDendronMode) ?? false);

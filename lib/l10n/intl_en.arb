@@ -220,7 +220,7 @@
     "Never": "Never",
     "@Never": {},
     "Data": "Data",
-    "@Data": {},  
+    "@Data": {},
     "Main_Page": "Main Page",
     "@Main_Page": {},
     "Show_subtitle": "Show subtitle",
@@ -229,6 +229,10 @@
     "@The_subtitle_contains_the_file_name_and_tags": {},
     "Content_not_found": "Content not found",
     "@Content_not_found": {},
+    "Create_note": "Create note",
+    "@Create_note": {},
+    "Received_text": "Received text",
+    "@Received_text": {},
     "minutes": "{num} minutes",
     "@minutes": {
         "placeholders": {
