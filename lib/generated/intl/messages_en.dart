@@ -209,6 +209,8 @@ class MessageLookup extends MessageLookupByLibrary {
                 "This will delete them permanently."),
         "Trash": MessageLookupByLibrary.simpleMessage("Trash"),
         "UnStar": MessageLookupByLibrary.simpleMessage("UnStar"),
+        "Undo": MessageLookupByLibrary.simpleMessage("Undo"),
+        "Undo_change": MessageLookupByLibrary.simpleMessage("Undo change"),
         "Unfavorite": MessageLookupByLibrary.simpleMessage("Unfavorite"),
         "Unfavorite_selected":
             MessageLookupByLibrary.simpleMessage("Unfavorite selected"),

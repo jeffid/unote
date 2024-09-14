@@ -233,6 +233,10 @@
   "@Create_note": {},
   "Received_text": "接收的文本",
   "@Received_text": {},
+  "Undo_change": "撤销变更",
+  "@Undo_change": {},
+  "Undo": "撤销",
+  "@Undo": {},
   "minutes": "{num} 分钟",
   "@minutes": {
     "placeholders": {

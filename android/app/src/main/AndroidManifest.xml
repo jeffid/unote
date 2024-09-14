@@ -1,7 +1,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" /> -->
+
+    <uses-permission android:name="android.permission.READ_INTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!-- label is app show name -->
     <application
-        android:label="inote"
+        android:label="iNote"
         android:name="${applicationName}"
+        android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/ic_launcher">
         <!-- <activity
             android:name=".MainActivity"
@@ -36,7 +51,6 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize"
-            android:taskAffinity=""
             android:exported="true">
 
 
@@ -55,8 +69,8 @@
             </intent-filter>
 
 
-            <!--TODO:
-            Add this filter, if you want support opening urls into your app-->
+            <!-- TODO:
+            Add this filter if you want support opening urls into your app-->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -67,8 +81,8 @@
                     android:pathPrefix="/invite" />
             </intent-filter>
 
-            <!--TODO:
-            Add this filter, if you want support opening files into your app-->
+            <!-- TODO:
+            Add this filter if you want support opening files into your app-->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -77,31 +91,28 @@
                     android:scheme="content" />
             </intent-filter>
 
-            <!--TODO:
-            Add this filter, if you want to support sharing text into your app-->
+            <!-- https://pub.dev/packages/share_handler#android-->
+            <!-- TODO: Add this filter if you want to handle shared text-->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/*" />
             </intent-filter>
 
-            <!--TODO:
-            Add this filter, if you want to support sharing images into your app-->
-            <intent-filter>
+            <!-- TODO: Add this filter if you want to handle shared images-->
+            <!-- <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="image/*" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="image/*" />
-            </intent-filter>
+            </intent-filter> -->
 
-            <!--TODO:
-            Add this filter, if you want to support sharing videos into your app-->
-            <intent-filter>
+            <!-- TODO: Add this filter if you want to handle shared videos-->
+            <!-- <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="video/*" />
@@ -110,11 +121,10 @@
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="video/*" />
-            </intent-filter>
+            </intent-filter> -->
 
-            <!--TODO:
-            Add this filter, if you want to support sharing any type of files-->
-            <intent-filter>
+            <!-- TODO: Add this filter if you want to handle any type of file-->
+            <!-- <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="*/*" />
@@ -123,7 +133,16 @@
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="*/*" />
-            </intent-filter>
+            </intent-filter> -->
+
+            <!-- TODO: (Optional) Add these meta-data tags if you want to support sharing to a
+            specific target/conversation/shortcut (via the recordSentMessage api) -->
+            <!-- <meta-data
+                android:name="android.service.chooser.chooser_target_service"
+                android:value="androidx.sharetarget.ChooserTargetServiceCompat" />
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/share_targets" /> -->
         </activity>
 
         <!-- Don't delete the meta-data below.
@@ -132,6 +151,7 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
@@ -144,6 +164,4 @@
         </intent>
     </queries>
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE " />
 </manifest>

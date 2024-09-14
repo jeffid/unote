@@ -20,7 +20,9 @@ import './screen_lock.dart';
 ///
 class SettingsPage extends StatefulWidget {
   final NotesStore store;
+
   SettingsPage(this.store);
+
   @override
   _SettingsPageState createState() => _SettingsPageState();
 }
@@ -34,6 +36,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     PrefService.setDefaultValues({
+      ca.lang: Intl.defaultLocale,
       ca.theme: ThemeType.light.name,
       ca.canSearchContent: true,
       ca.canShowModeSwitcher: true,
@@ -65,11 +68,9 @@ class _SettingsPageState extends State<SettingsPage> {
           S.current.en,
           ca.en,
           ca.lang,
-          isDefault: Intl.defaultLocale == ca.en,
           onSelect: () {
-            PrefService.setString(ca.lang, ca.en);
             Intl.defaultLocale = ca.en;
-            setState(() {});
+            if (mounted) setState(() {});
           },
           activeColor: accentColor,
           inactiveColor: accentColor,
@@ -78,11 +79,9 @@ class _SettingsPageState extends State<SettingsPage> {
           S.current.zhCn,
           ca.zhCn,
           ca.lang,
-          isDefault: Intl.defaultLocale == ca.zhCn,
           onSelect: () {
-            PrefService.setString(ca.lang, ca.zhCn);
             Intl.defaultLocale = ca.zhCn;
-            setState(() {});
+            if (mounted) setState(() {});
           },
           activeColor: accentColor,
           inactiveColor: accentColor,
@@ -94,7 +93,7 @@ class _SettingsPageState extends State<SettingsPage> {
           S.current.Light,
           ThemeType.light.name,
           ca.theme,
-          isDefault: true,
+          // isDefault: true,
           onSelect: () {
             Provider.of<ThemeNotifier>(context, listen: false)
                 .updateTheme(ThemeType.light.name);
@@ -195,10 +194,8 @@ class _SettingsPageState extends State<SettingsPage> {
           inactiveThumbColor: accentColor,
           onEnable: () async {
             String pwd = await screenLockPwdDialog(context);
-            // debugPrint('Safety pwd: $pwd');
-            if (pwd.isEmpty) throw 'rollback screen lock status';
+            if (pwd.isEmpty) throw S.current.Undo_change;
             String pwdHash = pwdHashStr(pwd);
-            // debugPrint('Safety pwdHash: $pwdHash');
             PrefService.setString(ca.screenLockPwd, pwdHash);
 
             // start screen lock
@@ -216,7 +213,7 @@ class _SettingsPageState extends State<SettingsPage> {
             onChanged: (v) {
               // debugPrint('Safety duration: $v');
               PrefService.setInt(ca.screenLockDuration, v);
-              setState(() {});
+              if (mounted) setState(() {});
             },
             items: <DropdownMenuItem>[
               DropdownMenuItem(
@@ -269,7 +266,7 @@ class _SettingsPageState extends State<SettingsPage> {
               PrefService.setString(ca.dataPath, dir.path);
 
               await store.refresh();
-              setState(() {});
+              if (mounted) setState(() {});
               Navigator.of(context).pop();
             }
           },

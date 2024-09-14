@@ -174,6 +174,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("本操作将永久删除该文件"),
         "Trash": MessageLookupByLibrary.simpleMessage("丢弃"),
         "UnStar": MessageLookupByLibrary.simpleMessage("取消星标"),
+        "Undo": MessageLookupByLibrary.simpleMessage("撤销"),
+        "Undo_change": MessageLookupByLibrary.simpleMessage("撤销变更"),
         "Unfavorite": MessageLookupByLibrary.simpleMessage("取消收藏"),
         "Unfavorite_selected": MessageLookupByLibrary.simpleMessage("取消收藏选中"),
         "Unpin": MessageLookupByLibrary.simpleMessage("取消置顶"),

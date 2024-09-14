@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_highlight/themes/a11y-light.dart';
 import 'package:markdown_widget/markdown_widget.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '/utils/logger.dart';
 
@@ -69,6 +70,9 @@ class _PreviewPageState extends State<PreviewPage> {
               ),
               onTap: (url) {
                 logger.d('Tapped on link: $url');
+                if (url.startsWith('http')) {
+                  launchUrl(Uri.parse(url));
+                }
               },
             ),
           ],
@@ -97,6 +101,7 @@ class CodeWrapperWidget extends StatefulWidget {
 class _PreWrapperState extends State<CodeWrapperWidget> {
   ///
   late Widget _switchWidget;
+
   ///
   bool hasCopied = false;
 

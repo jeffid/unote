@@ -233,6 +233,10 @@
     "@Create_note": {},
     "Received_text": "Received text",
     "@Received_text": {},
+    "Undo_change": "Undo change",
+    "@Undo_change": {},
+    "Undo": "Undo",
+    "@Undo": {},
     "minutes": "{num} minutes",
     "@minutes": {
         "placeholders": {

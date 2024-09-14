@@ -3,6 +3,7 @@ import 'package:logger/logger.dart';
 
 ///
 Logger logger = Logger();
+Logger lo = logger;
 
 ///
 DateTime now() => DateTime.now();
@@ -16,7 +17,7 @@ void dp(String? msg, {int? wrapWidth}) {
 void snackBar(BuildContext context, String? message) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text(message!),
+      content: Text(message ?? 'nil'),
       duration: const Duration(seconds: 2),
     ),
   );

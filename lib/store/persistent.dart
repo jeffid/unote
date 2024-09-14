@@ -42,7 +42,7 @@ Future<String?> pickPath() async {
   }
 
   String path = (await FilePicker.platform.getDirectoryPath()) ?? '';
-  if (path.isNotEmpty && (await isPathWritable(path))) {
+  if (path.isNotEmpty && (await isWritablePath(path))) {
     return formatPath(path);
   }
 
@@ -51,7 +51,7 @@ Future<String?> pickPath() async {
   }
 
   Directory defaultDir = await getApplicationDocumentsDirectory();
-  if (await isPathWritable(defaultDir.path)) {
+  if (await isWritablePath(defaultDir.path)) {
     return formatPath(defaultDir.path);
   }
 
@@ -59,7 +59,7 @@ Future<String?> pickPath() async {
 }
 
 ///
-Future<bool> isPathWritable(String? path) async {
+Future<bool> isWritablePath(String? path) async {
   final testFile = File('$path/${Random().nextInt(1000000)}');
 
   try {
@@ -74,7 +74,7 @@ Future<bool> isPathWritable(String? path) async {
 
 ///
 String mdTitle(String content,
-    {bool isFilename = false, bool isTrim = false, bool isHtmlStyle = true}) {
+    {bool isFilename = false, bool isHtmlStyle = true}) {
   RegExpMatch? heading =
       RegExp(r'^#\s+(.+?)(?=\s*$)', multiLine: true).firstMatch(content);
   String title = heading?[1] ?? '';
@@ -83,12 +83,10 @@ String mdTitle(String content,
     if (isHtmlStyle) {
       // format text (e.g. `:tada:` change to `🎉`)
       title = markdownToHtml(title, extensionSet: ExtensionSet.gitHubWeb)
-          .replaceAll(RegExp(r'<[^>]*?>'), ''); // remove html tag
+          .replaceAll(RegExp(r'<[^>]*?>|[\r\n]*'), ''); // remove html tag
     }
 
     if (isFilename) title = filenameFilter(title);
-
-    if (isTrim) title = title.trimLeft();
   }
 
   return title;
@@ -100,7 +98,7 @@ String filenameFilter(String filename) {
 }
 
 ///
-String? readAsString(String path){
+String? readAsString(String path) {
   try {
     return File(path).readAsStringSync();
   } catch (e) {
@@ -287,7 +285,7 @@ class PersistentStore {
     header += '---\n\n';
 
     logger.d(('saveNote', note.file.path));
-    logger.d(('saveNote', data, header));
+    logger.d(('saveNote', note.title, note.title.length, data, header));
 
     return header;
   }

@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:path/path.dart' as p;
 import 'package:preferences/preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:quick_actions/quick_actions.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:share_handler_platform_interface/share_handler_platform_interface.dart';
 
 import '/constant/app.dart' as ca;
 import '/generated/l10n.dart';
@@ -82,6 +84,9 @@ class _NoteListPageState extends State<NoteListPage> {
 
   final List<SharedMediaFile> _sharedFiles = [];
 
+  SharedMedia? _media;
+
+  ///
   @override
   void initState() {
     store.currentTag = widget.filterTag.isNotEmpty
@@ -96,15 +101,12 @@ class _NoteListPageState extends State<NoteListPage> {
 
     _isShowSubtitle = PrefService.boolDefault(ca.isShowSubtitle);
 
-    store.init();
+    if (appInfo.platform.isMobile) {
+      if (_media == null) _shareHandler();
+      if (widget.isFirst) _quickAction();
+    }
 
-    _load().then((_) {
-      if (!widget.isFirst || !appInfo.platform.isMobile) return;
-
-      _quickAction();
-
-      _receiveSharing();
-    });
+    _load();
 
     super.initState();
   }
@@ -133,49 +135,73 @@ class _NoteListPageState extends State<NoteListPage> {
       onPopInvoked: _onPopInvoked,
       child: Scaffold(
         appBar: _appBar(),
-        body: store.shownNotes.isEmpty
-            ? Center(child: Text(S.current.Content_not_found))
-            : RefreshIndicator(
-                onRefresh: () async {
-                  await _load();
-                },
-                child: Scrollbar(
-                  child: ListView(
-                    primary: true,
-                    children: <Widget>[
-                      if (_syncing) ...[
-                        LinearProgressIndicator(),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child:
-                              Text('Syncing with ${store.syncMethodName}...'),
-                        ),
-                        Divider(color: themeData.dividerColor),
-                      ],
-                      _sortBar(),
-                      Container(
-                        height: 1,
-                        color: Colors.grey.shade300,
-                      ),
-                      for (Note note in store.shownNotes)
-                        !note.file.existsSync()
-                            ? ListTile(
-                                title: Text(
-                                  note.title,
-                                  style: TextStyle(
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              )
-                            : _slidableItem(note),
-                    ],
+        body: RefreshIndicator(
+          onRefresh: () async {
+            await _load();
+          },
+          child: Scrollbar(
+            child: ListView(
+              primary: true,
+              children: <Widget>[
+                if (_syncing) ...[
+                  LinearProgressIndicator(),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('Syncing with ${store.syncMethodName}...'),
                   ),
+                  Divider(color: themeData.dividerColor),
+                ],
+                _sortBar(),
+                Container(
+                  height: 1,
+                  color: Colors.grey.shade300,
                 ),
-              ),
-        floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.add),
-          onPressed: () async => _createNewNote(),
+                // empty notice
+                if (store.shownNotes.isEmpty) ...[
+                  Center(
+                    heightFactor: 2,
+                    child: Text(
+                      S.current.Content_not_found,
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  )
+                ],
+                // note list
+                for (Note note in store.shownNotes)
+                  !note.file.existsSync()
+                      ? ListTile(
+                          title: Text(
+                            note.title,
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        )
+                      : _slidableItem(note),
+              ],
+            ),
+          ),
+        ),
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: <Widget>[
+            FloatingActionButton(
+              backgroundColor: cs.secondary.withOpacity(0.5),
+              child: Icon(Icons.refresh),
+              onPressed: () async => _load(),
+              heroTag: 'refresh',
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            FloatingActionButton(
+              backgroundColor: cs.secondary.withOpacity(0.5),
+              child: Icon(Icons.add),
+              onPressed: () async => _createNote(),
+            )
+          ],
         ),
         bottomNavigationBar: _selectedNotes.isEmpty ? null : _bottomBar(),
         drawer: _drawer(),
@@ -1033,7 +1059,7 @@ class _NoteListPageState extends State<NoteListPage> {
     setState(() {});
   }
 
-  ///
+  /// load note list
   Future _load() async {
     await store.refresh();
 
@@ -1090,8 +1116,8 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   ///
-  Future<void> _createNewNote([String content = '']) async {
-    Note newNote = await store.createNewNote(content);
+  Future<void> _createNote([String content = '', String title = '']) async {
+    Note newNote = await store.createNote(content, title);
 
     _filterAndSortNotes();
 
@@ -1111,7 +1137,7 @@ class _NoteListPageState extends State<NoteListPage> {
     final quickActions = QuickActions();
     quickActions.initialize((type) {
       if (type == 'action_create_note') {
-        _createNewNote();
+        _createNote();
       }
     });
     quickActions.setShortcutItems(<ShortcutItem>[
@@ -1121,6 +1147,42 @@ class _NoteListPageState extends State<NoteListPage> {
         icon: 'ic_shortcut_add',
       ),
     ]);
+  }
+
+  ///
+  /// Platform messages are asynchronous, so we initialize in an async method.
+  Future<void> _shareHandler() async {
+    final handler = ShareHandlerPlatform.instance;
+    _media = await handler.getInitialSharedMedia();
+
+    handler.sharedMediaStream.listen((SharedMedia media) {
+      // snackBar(context, media.content);
+      // snackBar(context, "Shared files: ${media.attachments?.length}");
+
+      if (media.content == null || media.content!.isEmpty) return;
+
+      String? content = media.content!;
+
+      logger.d(('_shareHandler', content, Uri.decodeFull(content)));
+      if (content.startsWith('content://')) {
+        // Create note from shared file content
+        // Android 9 shared (eg. content://com.android.providers.downloads.documents/document/raw%3A%2Fstorage%2Femulated%2F0%2FDownload%2Fexample2.md)
+        content = Uri.decodeFull(content);
+        // Restricted file type
+        if (!['.md', '.txt'].contains(p.extension(content))) return;
+
+        int start = content.indexOf('/storage');
+        String path =
+            start >= 0 ? content.substring(start) : Uri.parse(content).path;
+
+        content = readAsString(path);
+        if (content == null || content.isEmpty) return;
+        _createNote(content, mdTitle(content, isFilename: true));
+      } else {
+        // Create note from shared text
+        _handleSharedText(content);
+      }
+    });
   }
 
   ///
@@ -1183,7 +1245,7 @@ class _NoteListPageState extends State<NoteListPage> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _createNewNote(v);
+              _createNote(v);
             },
             child: Text(S.current.Create_note),
           ),

@@ -1210,6 +1210,26 @@ class S {
     );
   }
 
+  /// `Undo change`
+  String get Undo_change {
+    return Intl.message(
+      'Undo change',
+      name: 'Undo_change',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Undo`
+  String get Undo {
+    return Intl.message(
+      'Undo',
+      name: 'Undo',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `{num} minutes`
   String minutes(Object num) {
     return Intl.message(

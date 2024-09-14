@@ -55,34 +55,28 @@ class NotesStore {
   String get subAssetsDir => '$subNoteDir/assets'; // attachments
 
   ///
-  void init() {
-    syncMethod = PrefService.getString(ca.sync) ?? '';
-  }
+  // void init() {
+  //   syncMethod = PrefService.getString(ca.sync) ?? '';
+  // }
 
   ///
-  Future<Note> createNewNote([String content = '']) async {
+  Future<Note> createNote([String content = '', String title = '']) async {
     Note newNote = Note();
-    int i = 1;
+
+    // new title
+    int i = 0;
+    List<String> filenames = [];
+    for (Note note in allNotes) {
+      filenames.add(p.basenameWithoutExtension(note.file.path));
+    }
+    if (title.isEmpty) title = S.current.Untitled; // default
     while (true) {
-      String title = S.current.Untitled;
+      i++;
       if (i > 1) title += ' ($i)';
 
-      bool exists = false;
-
-      for (Note note in allNotes) {
-        if (title == note.title) {
-          exists = true;
-          break;
-        }
-      }
-
-      if (!exists) {
-        newNote.title = title;
-        break;
-      }
-
-      i++;
+      if (!filenames.contains(title)) break;
     }
+    newNote.title = title;
 
     if (isDendronMode) {
       newNote.header = {
