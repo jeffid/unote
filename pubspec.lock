@@ -655,9 +655,11 @@ packages:
   preferences:
     dependency: "direct main"
     description:
-      path: "D:\\_code\\_flutter\\_pkg\\preferences"
-      relative: false
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: "577724cdd3e3f491afe1e740a4f563ab97f1a554"
+      url: "git@github.com:inote-flutter/preferences"
+    source: git
     version: "5.3.0+1"
   provider:
     dependency: "direct main"

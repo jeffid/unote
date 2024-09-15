@@ -1166,14 +1166,18 @@ class _NoteListPageState extends State<NoteListPage> {
       logger.d(('_shareHandler', content, Uri.decodeFull(content)));
       if (content.startsWith('content://')) {
         // Create note from shared file content
-        // Android 9 shared (eg. content://com.android.providers.downloads.documents/document/raw%3A%2Fstorage%2Femulated%2F0%2FDownload%2Fexample2.md)
+        // Android 11+ not supported (OS Error: Permission denied, errno = 13)
+        // Android 11 shared (eg. content://com.android.externalstorage.documents/document/primary:Documents/example2.md)
+        // Android 9 shared (eg. content://com.android.providers.downloads.documents/document/raw:/storage/emulated/0/Download/example2.md)
         content = Uri.decodeFull(content);
         // Restricted file type
         if (!['.md', '.txt'].contains(p.extension(content))) return;
 
-        int start = content.indexOf('/storage');
+        int start = content.indexOf(':', 10);
         String path =
-            start >= 0 ? content.substring(start) : Uri.parse(content).path;
+            start >= 0 ? content.substring(start + 1) : Uri.parse(content).path;
+        // Android 11+ path
+        if (!path.startsWith('/')) path = '/storage/emulated/0/$path';
 
         content = readAsString(path);
         if (content == null || content.isEmpty) return;
