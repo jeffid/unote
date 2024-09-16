@@ -10,6 +10,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:preferences/preference_service.dart';
 
 import '/constant/app.dart' as ca;
+import '/main.dart';
 import '/model/note.dart';
 import '/utils/logger.dart';
 import '/utils/yaml.dart';
@@ -37,18 +38,16 @@ String formatPath(String path) {
 
 ///
 Future<String?> pickPath() async {
-  if (!await Permission.storage.request().isGranted) {
-    return null;
-  }
+  if (appInfo.platform.isMobile &&
+      !await Permission.storage.request().isGranted) return null;
 
   String path = (await FilePicker.platform.getDirectoryPath()) ?? '';
   if (path.isNotEmpty && (await isWritablePath(path))) {
     return formatPath(path);
   }
 
-  if ((await Permission.storage.request()).isDenied) {
-    return null;
-  }
+  if (appInfo.platform.isMobile &&
+      (await Permission.storage.request()).isDenied) return null;
 
   Directory defaultDir = await getApplicationDocumentsDirectory();
   if (await isWritablePath(defaultDir.path)) {

@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 import '/constant/app.dart' as ca;
 import '/main.dart';
 import '/generated/l10n.dart';
-import '/utils/logger.dart';
+// import '/utils/logger.dart';
 import '/provider/theme.dart';
 import '/store/encryption.dart';
 import '/store/notes.dart';
