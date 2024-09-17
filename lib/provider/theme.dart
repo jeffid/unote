@@ -32,6 +32,8 @@ class ThemeNotifier with ChangeNotifier {
     _setOnAccentColor(_accentColor);
     updateTheme();
   }
+  
+  Color get onAccentColor => _onAccentColor;
 
   ///
   void _setOnAccentColor(Color color) {
@@ -88,8 +90,8 @@ class ThemeNotifier with ChangeNotifier {
       secondary: _accentColor,
       // onSecondary: _onAccentColor,
       onSecondary: onBgColor, //
-      error: Colors.red.shade100,
-      onError: Colors.red,
+      error: Colors.red,
+      onError: Colors.redAccent,
       surface: _accentColor, // title bar bg color
       onSurface: onBgColor, // ListTile
       surfaceContainer: bgColor, // PopupMenuButton bg,

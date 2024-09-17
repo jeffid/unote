@@ -22,8 +22,8 @@ import '/store/encryption.dart';
 import '/store/notes.dart';
 import '/store/persistent.dart';
 import '/utils/logger.dart';
-import './form/pwd_form.dart';
 import './preview.dart';
+import './widget/pwd_form.dart';
 
 ///
 class EditPage extends StatefulWidget {

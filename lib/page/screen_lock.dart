@@ -10,8 +10,8 @@ import '/main.dart';
 import '/generated/l10n.dart';
 import '/store/encryption.dart';
 // import '/utils/logger.dart';
-import './form/pwd_form.dart';
 import './note_list.dart';
+import './widget/pwd_form.dart';
 
 ///
 void scLock({bool isCheckDuration = true}) {

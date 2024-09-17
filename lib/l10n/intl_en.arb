@@ -237,6 +237,12 @@
     "@Undo_change": {},
     "Undo": "Undo",
     "@Undo": {},
+    "Copy": "Copy",
+    "@Copy": {},
+    "Only_copy": "Only copy",
+    "@Only_copy": {},
+    "Paste": "Paste",
+    "@Paste": {},
     "minutes": "{num} minutes",
     "@minutes": {
         "placeholders": {

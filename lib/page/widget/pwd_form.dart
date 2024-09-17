@@ -10,7 +10,11 @@ Future<String> screenLockPwdDialog(BuildContext context) async {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(S.current.Please_set_the_screen_lock_passcode),
-          content: PwdForm.screenLockPwd(),
+          titleTextStyle: TextStyle(fontSize: 22, color: cs.onSurface),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: 300),
+            child: PwdForm.screenLockPwd(),
+          ),
         ),
       ) ??
       '';
@@ -22,7 +26,11 @@ Future<String> encryptionPwdDialog(BuildContext context) async {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(S.current.Please_set_the_encryption_password),
-          content: PwdForm.encryptionPwd(),
+          titleTextStyle: TextStyle(fontSize: 22, color: cs.onSurface),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: 300),
+            child: PwdForm.encryptionPwd(),
+          ),
         ),
       ) ??
       '';
@@ -179,10 +187,10 @@ class _PwdFormState extends State<PwdForm> {
                 notifier.value = PasswordStrength.calculate(text: v);
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
             SizedBox(
               width: double.maxFinite,
-              height: 48,
+              height: 40,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: cs.onSurface.withOpacity(0.5),
@@ -200,7 +208,7 @@ class _PwdFormState extends State<PwdForm> {
             const SizedBox(height: 10),
             SizedBox(
               width: double.maxFinite,
-              height: 48,
+              height: 40,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,

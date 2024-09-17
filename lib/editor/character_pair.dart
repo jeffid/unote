@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 
-import '/utils/logger.dart';
+// import '/utils/logger.dart';
 
 ///
 class CharacterPair implements TextInputFormatter {

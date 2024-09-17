@@ -65,6 +65,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Confirm_Password": MessageLookupByLibrary.simpleMessage("确认密码"),
         "Conflict": MessageLookupByLibrary.simpleMessage("冲突"),
         "Content_not_found": MessageLookupByLibrary.simpleMessage("暂无内容"),
+        "Copy": MessageLookupByLibrary.simpleMessage("复制"),
         "Create_note": MessageLookupByLibrary.simpleMessage("新建文档"),
         "Dark": MessageLookupByLibrary.simpleMessage("暗色"),
         "Data": MessageLookupByLibrary.simpleMessage("数据"),
@@ -109,6 +110,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Never": MessageLookupByLibrary.simpleMessage("永不"),
         "No_MD_title": MessageLookupByLibrary.simpleMessage("无文档标题"),
         "Ok": MessageLookupByLibrary.simpleMessage("完成"),
+        "Only_copy": MessageLookupByLibrary.simpleMessage("仅复制"),
         "Pair_Quotes": MessageLookupByLibrary.simpleMessage("启用符号自动匹对"),
         "Password": MessageLookupByLibrary.simpleMessage("密码"),
         "Password_cannot_be_empty":
@@ -116,6 +118,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Password_is_incorrect": MessageLookupByLibrary.simpleMessage("密码不正确"),
         "Passwords_do_not_match":
             MessageLookupByLibrary.simpleMessage("两次密码不匹配"),
+        "Paste": MessageLookupByLibrary.simpleMessage("粘贴"),
         "Pin": MessageLookupByLibrary.simpleMessage("置顶"),
         "Pin_selected": MessageLookupByLibrary.simpleMessage("置顶选中"),
         "Please_enter_characters": m3,

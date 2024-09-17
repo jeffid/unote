@@ -237,6 +237,12 @@
   "@Undo_change": {},
   "Undo": "撤销",
   "@Undo": {},
+  "Copy": "复制",
+  "@Copy": {},
+  "Only_copy": "仅复制",
+  "@Only_copy": {},
+  "Paste": "粘贴",
+  "@Paste": {},
   "minutes": "{num} 分钟",
   "@minutes": {
     "placeholders": {

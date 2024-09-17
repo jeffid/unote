@@ -72,6 +72,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Conflict": MessageLookupByLibrary.simpleMessage("Conflict"),
         "Content_not_found":
             MessageLookupByLibrary.simpleMessage("Content not found"),
+        "Copy": MessageLookupByLibrary.simpleMessage("Copy"),
         "Create_note": MessageLookupByLibrary.simpleMessage("Create note"),
         "Dark": MessageLookupByLibrary.simpleMessage("Dark"),
         "Data": MessageLookupByLibrary.simpleMessage("Data"),
@@ -129,6 +130,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Never": MessageLookupByLibrary.simpleMessage("Never"),
         "No_MD_title": MessageLookupByLibrary.simpleMessage("No MD title"),
         "Ok": MessageLookupByLibrary.simpleMessage("Ok"),
+        "Only_copy": MessageLookupByLibrary.simpleMessage("Only copy"),
         "Pair_Quotes":
             MessageLookupByLibrary.simpleMessage("Pair Brackets/Quotes"),
         "Password": MessageLookupByLibrary.simpleMessage("Password"),
@@ -138,6 +140,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Password is incorrect"),
         "Passwords_do_not_match":
             MessageLookupByLibrary.simpleMessage("Passwords do not match"),
+        "Paste": MessageLookupByLibrary.simpleMessage("Paste"),
         "Pin": MessageLookupByLibrary.simpleMessage("Pin"),
         "Pin_selected": MessageLookupByLibrary.simpleMessage("Pin selected"),
         "Please_enter_characters": m3,

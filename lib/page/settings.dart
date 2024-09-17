@@ -14,8 +14,8 @@ import '/provider/theme.dart';
 import '/store/encryption.dart';
 import '/store/notes.dart';
 import '/store/persistent.dart';
-import './form/pwd_form.dart';
 import './screen_lock.dart';
+import './widget/pwd_form.dart';
 
 ///
 class SettingsPage extends StatefulWidget {

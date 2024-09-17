@@ -21,6 +21,7 @@ import '/provider/setting.dart';
 import '/store/encryption.dart';
 import '/store/notes.dart';
 import '/store/persistent.dart';
+import '/utils/copy_paste.dart';
 import '/utils/logger.dart';
 import './about.dart';
 import './edit.dart';
@@ -76,6 +77,8 @@ class _NoteListPageState extends State<NoteListPage> {
 
   late Directory notesDir;
 
+  bool _isLoading = false;
+
   bool _syncing = false;
 
   Set<String> _selectedNotes = {};
@@ -102,7 +105,7 @@ class _NoteListPageState extends State<NoteListPage> {
     _isShowSubtitle = PrefService.boolDefault(ca.isShowSubtitle);
 
     if (appInfo.platform.isMobile) {
-      if (_media == null) _shareHandler();
+      if (appInfo.platform.isAndroid && _media == null) _shareHandler();
       if (widget.isFirst) _quickAction();
     }
 
@@ -156,6 +159,9 @@ class _NoteListPageState extends State<NoteListPage> {
                   height: 1,
                   color: Colors.grey.shade300,
                 ),
+                // if (_isLoading) ...[
+                //   LinearProgressIndicator(),
+                // ],
                 // empty notice
                 if (store.shownNotes.isEmpty) ...[
                   Center(
@@ -1060,10 +1066,17 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   /// load note list
-  Future _load() async {
-    await store.refresh();
+  Future<void> _load() async {
+    if (_isLoading) return;
 
-    setState(() {});
+    _isLoading = true;
+    // if (mounted) setState(() {});
+
+    await store.refresh();
+    // await Future.delayed(Duration(seconds: 3), () => debugPrint("Loading"));
+
+    _isLoading = false;
+    if (mounted) setState(() {});
   }
 
   ///
@@ -1245,6 +1258,13 @@ class _NoteListPageState extends State<NoteListPage> {
               Navigator.of(context).pop();
             },
             child: Text(S.current.Cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              CopyPaste.copy(v);
+            },
+            child: Text(S.current.Only_copy),
           ),
           TextButton(
             onPressed: () {

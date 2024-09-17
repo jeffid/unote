@@ -1230,6 +1230,36 @@ class S {
     );
   }
 
+  /// `Copy`
+  String get Copy {
+    return Intl.message(
+      'Copy',
+      name: 'Copy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only copy`
+  String get Only_copy {
+    return Intl.message(
+      'Only copy',
+      name: 'Only_copy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Paste`
+  String get Paste {
+    return Intl.message(
+      'Paste',
+      name: 'Paste',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `{num} minutes`
   String minutes(Object num) {
     return Intl.message(
