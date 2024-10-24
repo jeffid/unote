@@ -13,7 +13,7 @@ class ThemeNotifier with ChangeNotifier {
     updateTheme(PrefService.getString(ca.theme) ?? ThemeType.light.name);
   }
 
-  static const Color _defaultThemeColor = Color(0xff21d885);
+  static const Color _defaultThemeColor = Color(0xFF2196F3); // blue
 
   static Color get defaultThemeColor => _defaultThemeColor;
 

@@ -75,6 +75,6 @@ updated: '2024-06-01T00:00:00.000Z'
 
 ## Feedback
 
-Feel free to [contact us](https://github.com/inote-flutter/inote/issues) about any issues you may encounter, any features suggestions and generally sharing your opinion about iNote and how we can improve it.
+Feel free to [contact us](https://github.com/punote/punote/issues) about any issues you may encounter, any features suggestions and generally sharing your opinion about PuNote and how we can improve it.
 
 Have a nice day!

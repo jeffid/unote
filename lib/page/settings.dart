@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:inote/provider/setting.dart';
 import 'package:intl/intl.dart';
 import 'package:preferences/preferences.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +9,7 @@ import '/constant/app.dart' as ca;
 import '/main.dart';
 import '/generated/l10n.dart';
 // import '/utils/logger.dart';
+import '/provider/setting.dart';
 import '/provider/theme.dart';
 import '/store/encryption.dart';
 import '/store/notes.dart';

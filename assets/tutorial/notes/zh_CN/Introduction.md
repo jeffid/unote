@@ -72,6 +72,6 @@ updated: '2024-06-01T00:00:00.000Z'
 
 ## 反馈
 
-请随时[联系我们](https://github.com/inote-flutter/inote/issues)关于你可能遇到的任何问题和任何功能建议，并分享你对iNote的看法以及我们如何改进它。
+请随时[联系我们](https://github.com/punote/punote/issues)关于你可能遇到的任何问题和任何功能建议，并分享你对PuNote的看法以及我们如何改进它。
 
 祝你有愉快的一天！

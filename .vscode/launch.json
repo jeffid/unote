@@ -5,28 +5,28 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "iNote (Android)",
+            "name": "PuNote (Android)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
             "deviceId": "emulator-5554",
         },
         {
-            "name": "iNote (iOS)",
+            "name": "PuNote (iOS)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
             "deviceId": "",
         },
         {
-            "name": "iNote (macOS)",
+            "name": "PuNote (macOS)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
             "deviceId": "macos",
         },
         {
-            "name": "iNote (Windows)",
+            "name": "PuNote (Windows)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
@@ -34,18 +34,18 @@
         },
         
         {
-            "name": "iNote",
+            "name": "PuNote",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "iNote (profile mode)",
+            "name": "PuNote (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "iNote (release mode)",
+            "name": "PuNote (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"

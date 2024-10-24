@@ -14,7 +14,7 @@
 
     <!-- label is app show name -->
     <application
-        android:label="iNote"
+        android:label="PuNote"
         android:name="${applicationName}"
         android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/ic_launcher">

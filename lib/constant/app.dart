@@ -1,6 +1,6 @@
 /// App
-const String appName = 'iNote';
-const String gitHubRepo = 'https://github.com/inote-flutter/inote';
+const String appName = 'PuNote';
+const String gitHubRepo = 'https://github.com/punote/punote';
 /// PopupMenuButton
 const String menuPin='pin';
 const String menuFavorite='favorite';
@@ -13,7 +13,7 @@ const String menuTrash='trash';
 // const String menu_='';
 
 /// Setting keys for local storage.
-const String prefix = 'inote_';
+const String prefix = 'punote_';
 // sync remote file system
 const String sync = 'sync';
 const String syncWebdavHost = 'sync_webdav_host';

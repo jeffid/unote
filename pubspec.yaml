@@ -1,5 +1,5 @@
-name: inote
-display_name: iNote
+name: punote
+display_name: PuNote
 description: A markdown note-taking cross platform app.
 publish_to: none
 # The following defines the version and build number for your application.
@@ -56,21 +56,21 @@ dependencies:
   cryptography_flutter: ^2.3.2
 
   flutter_app_info:
-    git: git@github.com:inote-flutter/flutter_app_info
+    git: git@github.com:punote/flutter_app_info
   preferences:
     #  preferences: ^5.2.0
-    git: git@github.com:inote-flutter/preferences
+    git: git@github.com:punote/preferences
   bsdiff:
     #  bsdiff: ^0.1.0
-    git: git@github.com:inote-flutter/bsdiff
+    git: git@github.com:punote/bsdiff
   front_matter:
     #  front_matter: ^1.1.0
-    git: git@github.com:inote-flutter/front_matter
+    git: git@github.com:punote/front_matter
   markd:
     #    git: https://github.com/redsolver/markd.git
-    git: git@github.com:inote-flutter/markd
+    git: git@github.com:punote/markd
   rich_text_controller:
-    git: git@github.com:inote-flutter/rich_text_controller
+    git: git@github.com:punote/rich_text_controller
   password_strength_checker: ^1.2.4
   pinput: ^5.0.0
   local_auth: ^2.3.0
