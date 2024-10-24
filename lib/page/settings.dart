@@ -1,45 +1,52 @@
 import 'dart:io';
-import 'dart:math';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
 import 'package:preferences/preferences.dart';
-// import 'package:preferences/radio_preference.dart';
 import 'package:provider/provider.dart';
 
+import '/constant/app.dart' as ca;
+import '/main.dart';
+import '/generated/l10n.dart';
+// import '/utils/logger.dart';
+import '/provider/setting.dart';
 import '/provider/theme.dart';
+import '/store/encryption.dart';
 import '/store/notes.dart';
+import '/store/persistent.dart';
+import './screen_lock.dart';
+import './widget/pwd_form.dart';
 
 ///
 class SettingsPage extends StatefulWidget {
   final NotesStore store;
+
   SettingsPage(this.store);
+
   @override
   _SettingsPageState createState() => _SettingsPageState();
 }
 
 ///
 class _SettingsPageState extends State<SettingsPage> {
+  ///
   NotesStore get store => widget.store;
+
+  ///
   @override
   void initState() {
     PrefService.setDefaultValues({
-      'sync': '',
-      'sync_webdav_host': '',
-      'sync_webdav_path': '',
-      'sync_webdav_username': '',
-      'sync_webdav_password': '',
-      'theme': 'light',
-      'search_content': true,
-      'editor_mode_switcher': true,
-      'editor_pair_brackets': false,
-      'notes_list_virtual_tags': false,
-      'debug_logs_sync': false,
-      'editor_auto_save': false,
-      'dendron_mode': false,
-      'sort_tags_in_sidebar': true,
+      ca.lang: Intl.defaultLocale,
+      ca.theme: ThemeType.light.name,
+      ca.canSearchContent: true,
+      ca.canShowModeSwitcher: true,
+      ca.canPairMark: false,
+      ca.canAutoSave: false,
+      ca.canShowVirtualTags: false,
+      ca.isSortTags: true,
+      ca.canAutoListMark: true,
+      ca.isDendronMode: false,
+      ca.debugLogsSync: false,
     });
     super.initState();
   }
@@ -47,48 +54,85 @@ class _SettingsPageState extends State<SettingsPage> {
   ///
   @override
   Widget build(BuildContext context) {
+    Color accentColor = themeData.colorScheme.secondary;
+    // logger.d((ThemeType.light.toString(),ThemeType.light.name));
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings'),
+        title: Text(S.current.Settings),
       ),
       body: ListView(children: <Widget>[
-        PreferenceTitle('Theme'),
+        /// Language
+        PreferenceTitle(S.current.Language),
         RadioPreference(
-          'Light',
-          'light',
-          'theme',
-          isDefault: true,
+          S.current.en,
+          ca.en,
+          ca.lang,
           onSelect: () {
-            Provider.of<ThemeNotifier>(context, listen: false)
-                .updateTheme('light');
+            Intl.defaultLocale = ca.en;
+            if (mounted) setState(() {});
           },
+          activeColor: accentColor,
+          inactiveColor: accentColor,
         ),
         RadioPreference(
-          'Dark',
-          'dark',
-          'theme',
+          S.current.zhCn,
+          ca.zhCn,
+          ca.lang,
+          onSelect: () {
+            Intl.defaultLocale = ca.zhCn;
+            if (mounted) setState(() {});
+          },
+          activeColor: accentColor,
+          inactiveColor: accentColor,
+        ),
+
+        /// Theme
+        PreferenceTitle(S.current.Theme),
+        RadioPreference(
+          S.current.Light,
+          ThemeType.light.name,
+          ca.theme,
+          // isDefault: true,
           onSelect: () {
             Provider.of<ThemeNotifier>(context, listen: false)
-                .updateTheme('dark');
+                .updateTheme(ThemeType.light.name);
           },
+          activeColor: accentColor,
+          inactiveColor: accentColor,
         ),
         RadioPreference(
-          'Black / AMOLED',
-          'black',
-          'theme',
+          S.current.Dark,
+          ThemeType.dark.name,
+          ca.theme,
           onSelect: () {
             Provider.of<ThemeNotifier>(context, listen: false)
-                .updateTheme('black');
+                .updateTheme(ThemeType.dark.name);
           },
+          activeColor: accentColor,
+          inactiveColor: accentColor,
+        ),
+        RadioPreference(
+          S.current.Black_AMOLED,
+          ThemeType.black.name,
+          ca.theme,
+          onSelect: () {
+            Provider.of<ThemeNotifier>(context, listen: false)
+                .updateTheme(ThemeType.black.name);
+          },
+          activeColor: accentColor,
+          inactiveColor: accentColor,
         ),
         ListTile(
-          title: Text('Accent Color'),
+          title: Text(S.current.Accent_Color),
           trailing: Padding(
             padding: const EdgeInsets.only(right: 9, left: 9),
             child: Container(
               decoration: BoxDecoration(
-                border: Border.all(),
-                color: Color(PrefService.getInt('theme_color') ?? 0xff21d885),
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(3.0),
+                color: Color(PrefService.getInt(ca.themeColor) ??
+                    ThemeNotifier.defaultThemeColor.value),
               ),
               child: SizedBox(
                 width: 28,
@@ -100,13 +144,13 @@ class _SettingsPageState extends State<SettingsPage> {
             Color? color = await showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                      title: Text('Select accent color'),
+                      title: Text(S.current.Select_accent_color),
                       content: Container(
                         child: GridView.count(
                           crossAxisCount: 5,
                           children: [
                             for (Color color in [
-                              Color(0xff21d885),
+                              ThemeNotifier.defaultThemeColor,
                               ...Colors.primaries,
                               ...Colors.accents,
                             ])
@@ -125,7 +169,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       actions: <Widget>[
                         TextButton(
-                          child: Text('Cancel'),
+                          child: Text(S.current.Cancel),
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
@@ -133,170 +177,137 @@ class _SettingsPageState extends State<SettingsPage> {
                       ],
                     ));
             if (color != null) {
-              PrefService.setInt('theme_color', color.value);
+              PrefService.setInt(ca.themeColor, color.value);
 
               Provider.of<ThemeNotifier>(context, listen: false).accentColor =
                   color;
             }
           },
         ),
-        if (Platform.isAndroid) ...[
-          PreferenceTitle('Data Directory'),
-          SwitchPreference(
-            'Use external storage',
-            'notable_external_directory_enabled',
-            onChange: () async {
-              if (PrefService.getString('notable_external_directory') == null) {
-                PrefService.setString('notable_external_directory',
-                    (await getExternalStorageDirectory())!.path);
-              }
 
-              await store.listNotes();
-              await store.filterAndSortNotes();
-              await store.updateTagList();
+        /// Safety
+        PreferenceTitle(S.current.Safety),
+        SwitchPreference(
+          S.current.set_the_screen_lock_passcode,
+          ca.isScreenLock,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+          onEnable: () async {
+            String pwd = await screenLockPwdDialog(context);
+            if (pwd.isEmpty) throw S.current.Undo_change;
+            String pwdHash = pwdHashStr(pwd);
+            PrefService.setString(ca.screenLockPwd, pwdHash);
 
+            // start screen lock
+            scLock();
+          },
+          onDisable: () {
+            PrefService.remove(ca.screenLockPwd);
+          },
+        ),
+        ListTile(
+          title: Text(S.current.Set_the_screen_lock_duration),
+          trailing: DropdownButton<dynamic>(
+            value: PrefService.intDefault(ca.screenLockDuration, def: 0),
+            underline: Container(),
+            onChanged: (v) {
+              // debugPrint('Safety duration: $v');
+              PrefService.setInt(ca.screenLockDuration, v);
               if (mounted) setState(() {});
             },
-          ),
-          PreferenceHider([
-            ListTile(
-              title: Text('Location'),
-              subtitle: Text(
-                PrefService.getString('notable_external_directory') ?? '',
+            items: <DropdownMenuItem>[
+              DropdownMenuItem(
+                value: 0,
+                child: Text(S.current.Never),
               ),
-              onTap: () async {
-                Directory dir;
-
-                final dirStr = await _pickExternalDir();
-
-                if (dirStr == null) {
-                  return;
-                }
-
-                dir = Directory(dirStr);
-
-                if (dir.existsSync()) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: ListTile(
-                        leading: CircularProgressIndicator(),
-                        title: Text('Processing files...'),
-                      ),
-                    ),
-                    barrierDismissible: false,
-                  );
-                  PrefService.setString('notable_external_directory', dir.path);
-
-                  await store.listNotes();
-                  await store.filterAndSortNotes();
-                  await store.updateTagList();
-                  setState(() {});
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ], '!notable_external_directory_enabled'),
-        ],
-        PreferenceTitle('Editor'),
-        SwitchPreference(
-          'Auto Save',
-          'editor_auto_save',
-        ),
-        SwitchPreference(
-          'Use Mode Switcher',
-          'editor_mode_switcher',
-        ),
-        SwitchPreference(
-          'Pair Brackets/Quotes',
-          'editor_pair_brackets',
-        ),
-        PreferenceTitle('Search'),
-        SwitchPreference(
-          'Search content of notes',
-          'search_content',
-        ),
-        PreferenceTitle('Tags'),
-        SwitchPreference(
-          'Sort tags alphabetically in the sidebar',
-          'sort_tags_in_sidebar',
-        ),
-        PreferenceTitle('Preview'),
-        SwitchPreference(
-          'Enable single line break syntax',
-          'single_line_break_syntax',
-          desc:
-              'When enabled, single line breaks are rendered as real line breaks',
-        ),
-        /*        PreferenceTitle('Sync'),
-        RadioPreference(
-          'No Sync',
-          '',
-          'sync',
-          isDefault: true,
-          onSelect: () {
-            setState(() {
-              store.syncMethod = '';
-            });
-          },
-        ),
-        RadioPreference(
-          'WebDav Sync',
-          'webdav',
-          'sync',
-          onSelect: () {
-            setState(() {
-              store.syncMethod = 'webdav';
-            });
-          },
-        ),
-        if (store.syncMethod == 'webdav')
-          Column(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'WARNING: WebDav Sync is not supported! Please use another app to sync if possible (Syncthing is recommended) and do NOT use it for important data or accounts! ',
-                  style: TextStyle(color: Colors.red),
-                ),
+              DropdownMenuItem(
+                value: 5,
+                child: Text(S.current.minutes(5)),
               ),
-              TextFieldPreference(
-                'Host',
-                'sync_webdav_host',
-                hintText: 'mynextcloud.tld/remote.php/webdav/',
+              DropdownMenuItem(
+                value: 30,
+                child: Text(S.current.minutes(30)),
               ),
-              TextFieldPreference(
-                'Path',
-                'sync_webdav_path',
-                hintText: 'notable',
-              ),
-              TextFieldPreference('Username', 'sync_webdav_username'),
-              TextFieldPreference(
-                'Password',
-                'sync_webdav_password',
-                obscureText: true,
+              DropdownMenuItem(
+                value: 60,
+                child: Text(S.current.minutes(60)),
               ),
             ],
           ),
-        */
-        PreferenceTitle('More'),
+        ),
+
+        /// Data Directory
+        PreferenceTitle(S.current.Data),
         ListTile(
-          title: Text('Recreate tutorial notes'),
+          title: Text(S.current.Location),
+          subtitle: Text(PrefService.stringDefault(ca.dataPath)),
+          onTap: () async {
+            final String? path = await pickPath();
+            if (path == null) return;
+
+            Directory dir = Directory(path);
+            if (dir.existsSync()) {
+              showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    return PopScope(
+                      canPop: false,
+                      child: AlertDialog(
+                        title: ListTile(
+                          leading: CircularProgressIndicator(),
+                          title: Text('Processing files...'),
+                        ),
+                      ),
+                    );
+                  });
+
+              // set selected directory path
+              PrefService.setString(ca.dataPath, dir.path);
+
+              await store.refresh();
+              if (mounted) setState(() {});
+              Navigator.of(context).pop();
+            }
+          },
+        ),
+
+        /// Main Page
+        PreferenceTitle(S.current.Main_Page),
+        SwitchPreference(
+          S.current.Search_content_of_notes,
+          ca.canSearchContent,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+        ),
+        SwitchPreference(
+          S.current.Show_subtitle,
+          ca.isShowSubtitle,
+          desc: S.current.The_subtitle_contains_the_file_name_and_tags,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+          onChange: () {
+            Provider.of<SettingNotifier>(context, listen: false)
+                .isShowSubtitle = PrefService.boolDefault(ca.isShowSubtitle);
+          },
+        ),
+        ListTile(
+          title: Text(S.current.Recreate_tutorial_notes),
           onTap: () async {
             if (await showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                          title: Text(
-                              'Do you want to recreate the tutorial notes and attachments?'),
+                          title: Text(S.current
+                              .Do_you_want_to_recreate_the_tutorial_notes),
                           actions: <Widget>[
                             TextButton(
-                              child: Text('Cancel'),
+                              child: Text(S.current.Cancel),
                               onPressed: () {
                                 Navigator.of(context).pop(false);
                               },
                             ),
                             TextButton(
-                              child: Text('Recreate'),
+                              child: Text(S.current.Recreate),
                               onPressed: () {
                                 Navigator.of(context).pop(true);
                               },
@@ -305,82 +316,141 @@ class _SettingsPageState extends State<SettingsPage> {
                         )) ??
                 false) {
               await store.createTutorialNotes();
-              await store.createTutorialAttachments();
-              await store.listNotes();
-              await store.filterAndSortNotes();
-              await store.updateTagList();
+              // await store.createTutorialAssets();
+              await store.refresh();
             }
           },
         ),
-        /*        PreferenceTitle('Debug'),
+
+        /// Editor
+        PreferenceTitle(S.current.Editor),
         SwitchPreference(
-          'Create sync logfile ',
-          'debug_logs_sync',
-        ), */
-        PreferenceTitle('Experimental'),
+          S.current.Auto_Save,
+          ca.canAutoSave,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+        ),
         SwitchPreference(
-          'Enable Dendron support',
-          'dendron_mode',
-          desc: 'Dendron is a VSCode-based note-taking tool',
+          S.current.Use_Mode_Switcher,
+          ca.canShowModeSwitcher,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+        ),
+        SwitchPreference(
+          S.current.Pair_Quotes,
+          ca.canPairMark,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+        ),
+        SwitchPreference(
+          S.current.Automatic_list_mark,
+          ca.canAutoListMark,
+          desc: S.current
+              .Adds_a_list_mark_to_a_new_line_if_the_line_before_it_had_one,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+        ),
+
+        /// Tags
+        PreferenceTitle(S.current.Tags),
+        SwitchPreference(
+          S.current.Sort_tags_alphabetically_in_the_sidebar,
+          ca.isSortTags,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+        ),
+        SwitchPreference(
+          S.current.Show_virtual_tags,
+          ca.canShowVirtualTags,
+          desc:
+              S.current.Adds_a_virtual_tag_to_notes_which_are_in_a_subdirectory,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+        ),
+
+        /// Experimental
+        PreferenceTitle(S.current.Experimental),
+        SwitchPreference(
+          S.current.Enable_Dendron_support,
+          ca.isDendronMode,
+          desc: S.current.Dendron_is_a_VSCodeBased_NoteTaking_tool,
           onChange: () async {
-            await store.listNotes();
-            await store.filterAndSortNotes();
-            await store.updateTagList();
+            await store.refresh();
 
             if (mounted) setState(() {});
           },
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
         ),
-        SwitchPreference(
-          'Automatic bullet points',
-          'auto_bullet_points',
-          desc:
-              'Adds a bullet point to a new line if the line before it had one',
-        ),
-        SwitchPreference(
-          'Show virtual tags',
-          'notes_list_virtual_tags',
-          desc:
-              'Adds a virtual tag (#/path) to notes which are in a subdirectory',
-        ),
+
+        // /// Preview
+        // PreferenceTitle(S.current.Preview),
+        // SwitchPreference(
+        //   'Enable single line break syntax',
+        //   'single_line_break_syntax',
+        //   desc:
+        //       'When enabled, single line breaks are rendered as real line breaks',
+        //   activeColor: accentColor,
+        //   inactiveThumbColor: accentColor,
+        // ),
+
+        // PreferenceTitle(S.current.Sync),
+        // RadioPreference(
+        //   'No Sync',
+        //   '',
+        //   'sync',
+        //   isDefault: true,
+        //   onSelect: () {
+        //     setState(() {
+        //       store.syncMethod = '';
+        //     });
+        //   },
+        // ),
+        // RadioPreference(
+        //   'WebDav Sync',
+        //   'webdav',
+        //   'sync',
+        //   onSelect: () {
+        //     setState(() {
+        //       store.syncMethod = 'webdav';
+        //     });
+        //   },
+        // ),
+        // if (store.syncMethod == 'webdav')
+        //   Column(
+        //     children: <Widget>[
+        //       Padding(
+        //         padding: const EdgeInsets.symmetric(horizontal: 16),
+        //         child: Text(
+        //           'WARNING: WebDav Sync is not supported! Please use another app to sync if possible (Syncthing is recommended) and do NOT use it for important data or accounts! ',
+        //           style: TextStyle(color: Colors.red),
+        //         ),
+        //       ),
+        //       TextFieldPreference(
+        //         'Host',
+        //         'sync_webdav_host',
+        //         hintText: 'mynextcloud.tld/remote.php/webdav/',
+        //       ),
+        //       TextFieldPreference(
+        //         'Path',
+        //         'sync_webdav_path',
+        //         hintText: 'notable',
+        //       ),
+        //       TextFieldPreference('Username', 'sync_webdav_username'),
+        //       TextFieldPreference(
+        //         'Password',
+        //         'sync_webdav_password',
+        //         obscureText: true,
+        //       ),
+        //     ],
+        //   ),
+
+        // PreferenceTitle('Debug'),
+        // SwitchPreference(
+        //   'Create sync logfile ',
+        //   'debug_logs_sync',
+        // ),
       ]),
     );
-  }
-
-  ///
-  Future<String?> _pickExternalDir() async {
-    if (!await Permission.storage.request().isGranted) {
-      return null;
-    }
-
-    var dir = await FilePicker.platform.getDirectoryPath();
-    if ((dir ?? '').isNotEmpty) {
-      if (await _checkIfDirectoryIsWritable(dir!)) {
-        return dir;
-      }
-    }
-
-    if ((await Permission.storage.request()).isDenied) {
-      return null;
-    }
-
-    var externalDir = await getExternalStorageDirectory();
-    if (await _checkIfDirectoryIsWritable(externalDir?.path)) {
-      return externalDir?.path;
-    }
-    return null;
-  }
-
-  ///
-  Future<bool> _checkIfDirectoryIsWritable(String? path) async {
-    final testFile = File('$path/${Random().nextInt(1000000)}');
-
-    try {
-      await testFile.create(recursive: true);
-      await testFile.writeAsString("This is only a test file, please ignore.");
-      await testFile.delete();
-    } catch (e) {
-      return false;
-    }
-    return true;
   }
 }

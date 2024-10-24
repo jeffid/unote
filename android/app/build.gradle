@@ -24,8 +24,9 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace = "cc.waacoo.inote"
+    namespace = "io.github.punote"
     compileSdk = flutter.compileSdkVersion
+    // compileSdk = 29 // throw err
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -35,11 +36,13 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "cc.waacoo.inote"
+        applicationId = "io.github.punote"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // minSdk = flutter.minSdkVersion
+        // targetSdk = flutter.targetSdkVersion
+        minSdk = 21
+        targetSdk = 31 // The Android 14 API(34) restricts access to data directories.
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
     }

@@ -1,49 +1,224 @@
 import 'dart:io';
+import 'dart:math';
 
-import 'package:preferences/preference_service.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:front_matter/front_matter.dart' as fm;
+import 'package:markd/markdown.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:preferences/preference_service.dart';
 
-import '/utils/yaml.dart';
+import '/constant/app.dart' as ca;
+import '/main.dart';
 import '/model/note.dart';
+import '/utils/logger.dart';
+import '/utils/yaml.dart';
 
-const supportedFrontMatterKeys = [
-  'title',
-  'modified',
-  'created',
-  'tags',
-  'attachments',
-  'pinned',
-  'favorite',
-  'deleted',
-  'updated',
-];
+///
+Future<Directory> dataDirectory() async {
+  String path = PrefService.stringDefault(ca.dataPath);
+  if (path.isEmpty) {
+    // Default file path for app initialization
+    path = p.join((await getApplicationDocumentsDirectory()).path,
+        ca.appName.toLowerCase());
+    path = formatPath(path);
+    PrefService.setString(ca.dataPath, path);
+  }
+
+  return Directory(path);
+}
+
+///
+String formatPath(String path) {
+  return (Platform.isWindows && path.indexOf(r'\') > -1)
+      ? path.replaceAll(r'\', '/')
+      : path;
+}
+
+///
+Future<String?> pickPath() async {
+  if (appInfo.platform.isMobile &&
+      !await Permission.storage.request().isGranted) return null;
+
+  String path = (await FilePicker.platform.getDirectoryPath()) ?? '';
+  if (path.isNotEmpty && (await isWritablePath(path))) {
+    return formatPath(path);
+  }
+
+  if (appInfo.platform.isMobile &&
+      (await Permission.storage.request()).isDenied) return null;
+
+  Directory defaultDir = await getApplicationDocumentsDirectory();
+  if (await isWritablePath(defaultDir.path)) {
+    return formatPath(defaultDir.path);
+  }
+
+  return null;
+}
+
+///
+Future<bool> isWritablePath(String? path) async {
+  final testFile = File('$path/${Random().nextInt(1000000)}');
+
+  try {
+    await testFile.create(recursive: true);
+    await testFile.writeAsString("This is only a test file, please ignore.");
+    await testFile.delete();
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
+///
+String mdTitle(String content,
+    {bool isFilename = false, bool isHtmlStyle = true}) {
+  RegExpMatch? heading =
+      RegExp(r'^#\s+(.+?)(?=\s*$)', multiLine: true).firstMatch(content);
+  String title = heading?[1] ?? '';
+
+  if (title.isNotEmpty) {
+    if (isHtmlStyle) {
+      // format text (e.g. `:tada:` change to `🎉`)
+      title = markdownToHtml(title, extensionSet: ExtensionSet.gitHubWeb)
+          .replaceAll(RegExp(r'<[^>]*?>|[\r\n]*'), ''); // remove html tag
+    }
+
+    if (isFilename) title = filenameFilter(title);
+  }
+
+  return title;
+}
+
+///
+String filenameFilter(String filename) {
+  return filename.replaceAll(RegExp(r'[\/:*?"<>|]'), '');
+}
+
+///
+String? readAsString(String path) {
+  try {
+    return File(path).readAsStringSync();
+  } catch (e) {
+    logger.e('readAsString error: $e');
+    return null;
+  }
+}
 
 ///
 class PersistentStore {
-  static bool get isDendronModeEnabled =>
-      (PrefService.getBool('dendron_mode') ?? false);
+  static bool get isDendronMode =>
+      (PrefService.getBool(ca.isDendronMode) ?? false);
 
+  /// [readNote]
+  /// markdown file content example：
+  /// ```md
+  /// ---
+  /// title: 01 - The Data Directory
+  /// tags: [Basics, Notebooks/Tutorial]
+  /// created: 1723268317678
+  /// updated: 1723268317678
+  /// ---
   ///
-  static Future<String?> readContent(Note note) async {
-    if (!note.file.existsSync()) return null;
+  /// # H1 - The Data Directory
+  /// content text...
+  /// ## H2
+  /// ```
+  static Future<Note?> readNote(File file) async {
+    // print('PersistentStore.readNote');
 
-    String fileContent = await note.file.readAsString();
+    if (!file.existsSync()) return null;
+    Note note = Note(f: file);
 
-    // var content;
-    String content = '';
+    Map header = {};
 
-    if (fileContent.trimLeft().startsWith('---')) {
-      var doc = fm.parse(fileContent);
-      if (doc.content != null) {
-        content = doc.content!.trimLeft();
-      } else {
-        content = fileContent.trimLeft();
-      }
-    } else {
-      content = fileContent.trimLeft();
+    String fileContent = file.readAsStringSync().trimLeft();
+
+    if (fileContent.startsWith('---')) {
+      fm.FrontMatterDocument doc = fm.parse(fileContent);
+      // String headerString = fileContent.split('---')[1];
+      header = doc.data ?? {};
     }
 
-    if (isDendronModeEnabled) {
+    // logger.d(('readNote: ', header));
+
+    // note title
+    note.title = mdTitle(fileContent);
+    if (note.title.isEmpty && header['title'] != null) {
+      note.title = header['title'].toString();
+    }
+    if (note.title.isEmpty) {
+      String title = p.basename(file.path);
+      if (title.endsWith('.md')) {
+        title = title.substring(0, title.length - 3); // remove extension
+      }
+      note.title = title;
+    }
+
+    // note updated time
+    if (header['updated'] != null) {
+      if (header['updated'] is int) {
+        note.updated = DateTime.fromMillisecondsSinceEpoch(header['updated']);
+      } else {
+        note.updated =
+            DateTime.tryParse(header['updated']) ?? file.lastModifiedSync();
+      }
+    } else {
+      note.updated = file.lastModifiedSync();
+    }
+
+    // note created time
+    if (header['created'] != null) {
+      if (header['created'] is int) {
+        note.created = DateTime.fromMillisecondsSinceEpoch(header['created']);
+      } else {
+        note.created = DateTime.tryParse(header['created']) ?? note.updated;
+      }
+    } else {
+      note.created = note.updated;
+    }
+
+    // note.tags = (header['tags'] as YamlList).map((s) => s.toString()).toList();
+    note.tags = List.from((header['tags'] ?? []).cast<String>());
+    note.attachments = List.from((header['attachments'] ?? []).cast<String>());
+
+    note.pinned = header['pinned'] ?? false;
+    note.favorite = header['favorite'] ?? false;
+    note.deleted = header['deleted'] ?? false;
+    note.encrypted = header['encrypted'] ?? false;
+
+    if (header.isNotEmpty) {
+      note.header = Map<String, dynamic>.from(header);
+      note.header
+          .removeWhere((key, value) => !Note.validHeaderKeys.contains(key));
+    }
+
+    return note;
+  }
+
+  /// [readContent]
+  static Future<String> readContent(Note note,
+      {bool ignoreEncrypted = false}) async {
+    if (!note.file.existsSync()) return '';
+
+    String fileContent = (await note.file.readAsStringSync()).trimLeft();
+
+    String content = fileContent;
+
+    if (fileContent.startsWith('---')) {
+      fm.FrontMatterDocument doc = fm.parse(fileContent);
+      if (doc.content != null) content = doc.content!.trimLeft();
+    }
+
+    //
+    if (note.encrypted && !ignoreEncrypted) {
+      (String, bool) dec = await note.encryption!.decrypt(content);
+      note.isDecryptSuccess = dec.$2;
+      if (note.isDecryptSuccess) content = dec.$1;
+    }
+
+    if (isDendronMode && (!note.encrypted || note.isDecryptSuccess)) {
       if (!content.startsWith('# ')) {
         content = '# ${note.title}\n\n' + content;
       }
@@ -55,222 +230,67 @@ class PersistentStore {
   ///
   static Future saveNote(Note note, [String? content]) async {
     // print('PersistentStore.saveNote');
+    logger.d(('saveNote', content));
+    if (content == null) content = await readContent(note);
 
-    if (content == null) {
-      content = await readContent(note);
-    }
-    if (isDendronModeEnabled) {
-      final index = content?.indexOf('\n');
-      if (index != -1) content = content?.substring(index!).trimLeft();
+    if (isDendronMode) {
+      final int index = content.indexOf('\n');
+      if (index != -1) content = content.substring(index).trimLeft();
     }
 
+    // encrypt content
+    if (note.encrypted) {
+      content = await note.encryption!.encrypt(content);
+      logger.d(('saveNote > encrypt', content));
+    }
+
+    note.file.writeAsStringSync(_headerToString(note) + content);
+  }
+
+  /// [saveNoteHeader] only save header changes
+  static Future saveNoteHeader(Note note) async {
+    String content = await readContent(note, ignoreEncrypted: true);
+
+    note.file.writeAsStringSync(_headerToString(note) + content);
+  }
+
+  ///
+  static String _headerToString(Note note) {
     String header = '---\n';
     Map data = {};
 
     data['title'] = note.title;
 
-    if (PrefService.getBool('notes_list_virtual_tags') ?? false) {
+    if (PrefService.getBool(ca.canShowVirtualTags) ?? false) {
       note.tags.removeWhere((s) => s.startsWith('#/'));
     }
 
-    if (!isDendronModeEnabled) {
-      if (note.tags.isNotEmpty) data['tags'] = note.tags;
+    if (!isDendronMode && note.tags.isNotEmpty) {
+      data['tags'] = note.tags;
     }
 
     if (note.attachments.isNotEmpty) data['attachments'] = note.attachments;
 
-    if (note.isMillisecond) {
-      data['created'] = note.created.millisecondsSinceEpoch;
-      data[note.idUpdatedInsteadOfModified ? 'updated' : 'modified'] =
-          note.modified.millisecondsSinceEpoch;
-    } else {
-      data['created'] = note.created.toIso8601String();
-      data[note.idUpdatedInsteadOfModified ? 'updated' : 'modified'] =
-          note.modified.toIso8601String();
-    }
+    data['created'] = note.created.millisecondsSinceEpoch;
+    data['updated'] = note.updated.millisecondsSinceEpoch;
 
     if (note.pinned) data['pinned'] = true;
     if (note.favorite) data['favorite'] = true;
     if (note.deleted) data['deleted'] = true;
-
-    if (note.additionalFrontMatterKeys.isNotEmpty) {
-      data.addAll(note.additionalFrontMatterKeys.cast<String, dynamic>());
-    }
+    if (note.encrypted) data['encrypted'] = true;
 
     header += toYamlString(data);
-
     if (!header.endsWith('\n')) header += '\n';
-
     header += '---\n\n';
 
-    // print(header);
+    logger.d(('saveNote', note.file.path));
+    logger.d(('saveNote', note.title, note.title.length, data, header));
 
-    note.file.writeAsStringSync(header + content!);
-    /*  print(header + content); */
-  }
-
-  ///
-  static Future<Note?> readNote(File file) async {
-    // print('PersistentStore.readNote');
-
-    if (!file.existsSync()) return null;
-
-    String fileContent = file.readAsStringSync();
-
-    Map header;
-
-    if (fileContent.trimLeft().startsWith('---')) {
-      var doc = fm.parse(fileContent);
-/* 
-        String headerString = fileContent.split('---')[1]; */
-
-      header = doc.data ?? {};
-    } else {
-      header = {};
-    }
-
-    /* for (String line in headerString.split('\n')) {
-          if (line.trim().length == 0) continue;
-          print(line);
-          String key=line.split(':').first;
-          header[key] = line.sub;
-        } */
-    //print(header);
-    Note note = Note();
-
-    note.file = file;
-
-    if (header['title'] != null) {
-      note.title = header['title'].toString();
-    } else {
-      var title = file.path.split('/').last;
-      if (title.endsWith('.md')) {
-        title = title.substring(0, title.length - 3);
-      }
-      note.title = title;
-    }
-
-// note modified time
-    if (header['modified'] != null && !isDendronModeEnabled) {
-      if (header['modified'] is int) {
-        note.isMillisecond = true;
-        note.modified = DateTime.fromMillisecondsSinceEpoch(header['modified']);
-      } else {
-        note.modified = DateTime.tryParse(header['modified'])!;
-      }
-    } else if (header['updated'] != null) {
-      note.idUpdatedInsteadOfModified = true;
-      if (header['updated'] is int) {
-        note.isMillisecond = true;
-        note.modified = DateTime.fromMillisecondsSinceEpoch(header['updated']);
-      } else {
-        note.modified = DateTime.tryParse(header['updated'])!;
-      }
-    } else {
-      note.modified = file.lastModifiedSync();
-    }
-
-// note created time
-    if (header['created'] != null) {
-      if (header['created'] is int) {
-        note.isMillisecond = true;
-        note.created = DateTime.fromMillisecondsSinceEpoch(header['created']);
-      } else {
-        note.created = DateTime.tryParse(header['created'])!;
-      }
-    } else {
-      note.created = note.modified;
-    }
-
-    /* 
-        note.tags =
-            (header['tags'] as YamlList).map((s) => s.toString()).toList(); */
-    note.tags = List.from((header['tags'] ?? []).cast<String>());
-    note.attachments = List.from((header['attachments'] ?? []).cast<String>());
-
-    note.pinned = header['pinned'] ?? false;
-    note.favorite = header['favorite'] ?? false;
-    note.deleted = header['deleted'] ?? false;
-
-    if (header.isNotEmpty) {
-      note.additionalFrontMatterKeys = Map<String, dynamic>.from(header);
-
-      note.additionalFrontMatterKeys
-          .removeWhere((key, value) => supportedFrontMatterKeys.contains(key));
-    }
-
-    return note;
+    return header;
   }
 
   ///
   static Future deleteNote(Note note) async {
     await note.file.delete();
   }
-
-/*   static Future<Note> readNoteMetadata(File file) async {
-    // print('PersistentStore.readNote');
-
-    if (!file.existsSync()) return null;
-
-    var raf = await file.open();
-
-    List<int> bytes = [];
-
-    bool equalBytes(List<int> l1, List<int> l2) {
-      int i = -1;
-      return l1.every((val) {
-        i++;
-        return l2[i] == val;
-      });
-    }
-
-    while (true) {
-      var byte = raf.readByteSync();
-      if (byte == -1) break;
-
-      bytes.add(byte);
-
-      int length = bytes.length;
-
-      if (length > 6 &&
-          equalBytes(bytes.sublist(bytes.length - 4, bytes.length),
-              <int>[10, 45, 45, 45] /* == "\n---" */)) break;
-    }
-
-    String fileContent = utf8.decode(bytes);
-
-    var doc = fm.parse(fileContent);
-/* 
-        String headerString = fileContent.split('---')[1]; */
-
-    var header = doc.data /* loadYaml(headerString) */;
-
-    if (header == null) return null;
-
-    /* for (String line in headerString.split('\n')) {
-          if (line.trim().length == 0) continue;
-          print(line);
-          String key=line.split(':').first;
-          header[key] = line.sub;
-        } */
-    //print(header);
-    Note note = Note();
-
-    note.file = file;
-
-    note.title = header['title'];
-    note.created = DateTime.parse(header['created']);
-    note.modified = DateTime.parse(header['modified']);
-    /* 
-        note.tags =
-            (header['tags'] as YamlList).map((s) => s.toString()).toList(); */
-    note.tags = List.from((header['tags'] ?? []).cast<String>());
-    note.attachments = List.from((header['attachments'] ?? []).cast<String>());
-
-    note.pinned = header['pinned'] ?? false;
-    note.favorite = header['favorite'] ?? false;
-    note.deleted = header['deleted'] ?? false;
-
-    return note;
-  } */
 }

@@ -1,36 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:preferences/preference_service.dart';
 
+import '/constant/app.dart' as ca;
 ///
 class ThemeNotifier with ChangeNotifier {
   ///
   ThemeNotifier() {
     _accentColor =
-        Color(PrefService.getInt('theme_color') ?? _defaultThemeColor.value);
+        Color(PrefService.getInt(ca.themeColor) ?? _defaultThemeColor.value);
     _setOnAccentColor(_accentColor);
 
-    updateTheme(PrefService.getString('theme') ?? 'light');
+    updateTheme(PrefService.getString(ca.theme) ?? ThemeType.light.name);
   }
+
+  static const Color _defaultThemeColor = Color(0xFF2196F3); // blue
+
+  static Color get defaultThemeColor => _defaultThemeColor;
 
   ThemeType currentTheme = ThemeType.light;
 
-  late ThemeData _currentThemeData;
+  late ThemeData _themeData;
 
-  ThemeData get currentThemeData => _currentThemeData;
+  ThemeData get themeData => _themeData;
 
   late Color _accentColor, _onAccentColor;
 
   Color get accentColor => _accentColor;
-
-  Color _defaultThemeColor = Color(0xff21d885);
-
-  Color get defaultThemeColor => _defaultThemeColor;
 
   set accentColor(Color color) {
     _accentColor = color;
     _setOnAccentColor(_accentColor);
     updateTheme();
   }
+  
+  Color get onAccentColor => _onAccentColor;
 
   ///
   void _setOnAccentColor(Color color) {
@@ -75,7 +78,7 @@ class ThemeNotifier with ChangeNotifier {
     } else {
       brightness = Brightness.dark;
       bgColor = Colors.black;
-      onBgColor = Colors.grey.shade100;
+      onBgColor = Colors.grey.shade200;
       dividerColor = Colors.grey.shade800;
     }
 
@@ -85,56 +88,79 @@ class ThemeNotifier with ChangeNotifier {
       onPrimary: Colors.black,
       // secondary: Colors.blue.shade100,
       secondary: _accentColor,
-      onSecondary: _onAccentColor,
-      error: Colors.red.shade100,
-      onError: Colors.red,
+      // onSecondary: _onAccentColor,
+      onSecondary: onBgColor, //
+      error: Colors.red,
+      onError: Colors.redAccent,
       surface: _accentColor, // title bar bg color
       onSurface: onBgColor, // ListTile
+      surfaceContainer: bgColor, // PopupMenuButton bg,
     );
 
-    _currentThemeData = ThemeData(
-        brightness: brightness,
-        // scaffoldBackgroundColor: theme == 'black' ? Colors.black : null,
-        // // backgroundColor: theme == 'black' ? Colors.black : null,
-        // dialogBackgroundColor: theme == 'black' ? Colors.black : null,
-        // canvasColor: theme == 'black' ? Colors.black : null,
-        // cardColor: theme == 'black' ? Colors.black : null,
+    _themeData = ThemeData(
+      brightness: brightness,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: bgColor,
+      dialogBackgroundColor: bgColor,
+      canvasColor: bgColor,
+      cardColor: bgColor,
+      dividerColor: dividerColor,
+      hoverColor: _accentColor.withOpacity(0.5),
 
-        scaffoldBackgroundColor: bgColor,
-        dialogBackgroundColor: bgColor,
-        canvasColor: bgColor,
-        cardColor: bgColor,
-        dividerColor: dividerColor,
+      // primaryColor: _accentColor,
+      // primaryColor: Colors.cyan, // unused
+      // highlightColor: _accentColor,
+      // highlightColor: Colors.green.shade400, // unused
 
-        // accentColor: _accentColor,
-        colorScheme: colorScheme,
-        hoverColor: _accentColor.withOpacity(0.5),
+      // focusColor: Colors.blue,
+      // hintColor: Colors.blue.shade900,
+      // indicatorColor: Colors.green.shade900,
 
-        // primaryColor: _accentColor,
-        // primaryColor: Colors.cyan, // unused
-        // highlightColor: _accentColor,
-        // highlightColor: Colors.green.shade400, // unused
-
-        // focusColor: Colors.blue,
-        // hintColor: Colors.blue.shade900,
-        // indicatorColor: Colors.green.shade900,
-
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: _accentColor,
-        ),
-        buttonTheme: ButtonThemeData(
-          textTheme: ButtonTextTheme.primary,
-          buttonColor: _accentColor,
-        ),
-        textTheme: TextTheme(
-          // labelLarge: TextStyle(color: _accentColor),
-          labelLarge: TextStyle(color: Colors.purple), // unused
-          // bodySmall: TextStyle(color: Colors.amber.shade900),
-        ),
-        appBarTheme: AppBarTheme(
-          foregroundColor: colorScheme.onSecondary,
-          // titleTextStyle: TextStyle(color: Colors.green),
-        ));
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: _accentColor,
+      ),
+      buttonTheme: ButtonThemeData(
+        textTheme: ButtonTextTheme.primary,
+        buttonColor: _accentColor,
+      ),
+      // textTheme: TextTheme(
+      //   // labelLarge: TextStyle(color: _accentColor),
+      //   labelLarge: TextStyle(color: Colors.purple), // unused
+      //   // bodySmall: TextStyle(color: Colors.amber.shade900),
+      // ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: colorScheme.secondary,
+        foregroundColor: colorScheme.onSecondary,
+        // titleTextStyle: TextStyle(color: Colors.green),
+      ),
+      // switchTheme: SwitchThemeData( // no effect
+      //   thumbColor:
+      //       WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+      //     if (states.contains(WidgetState.selected)) {
+      //       return colorScheme.secondary;
+      //     }
+      //     return colorScheme.secondary;
+      //   }),
+      //   trackColor:
+      //       WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+      //     if (states.contains(WidgetState.selected)) {
+      //       return colorScheme.secondary.withOpacity(0.5);
+      //     }
+      //     return dividerColor.withOpacity(0.5);
+      //   }),
+      //   overlayColor:
+      //       WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+      //     if (states.contains(WidgetState.selected)) {
+      //       return colorScheme.secondary.withOpacity(0.1);
+      //     }
+      //     return dividerColor.withOpacity(0.1);
+      //   }),
+      //   trackOutlineColor: WidgetStateProperty.resolveWith<Color>(
+      //       (Set<WidgetState> states) => dividerColor),
+      //   trackOutlineWidth: WidgetStateProperty.resolveWith<double>(
+      //       (Set<WidgetState> states) => 1),
+      // ),
+    );
 
     notifyListeners();
   }

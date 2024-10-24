@@ -1,4 +1,4 @@
-package cc.waacoo.inote
+package io.github.punote
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,37 +1,64 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:preferences/preferences.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:uuid/uuid.dart';
-// import 'package:quick_actions/quick_actions.dart';
-// import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:path/path.dart' as p;
+import 'package:preferences/preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:quick_actions/quick_actions.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:share_handler_platform_interface/share_handler_platform_interface.dart';
 
+import '/constant/app.dart' as ca;
+import '/generated/l10n.dart';
 import '/main.dart';
-import '/constants/app_constants.dart';
 import '/model/note.dart';
-import '/page/edit.dart';
-import '/page/settings.dart';
+import '/provider/setting.dart';
+import '/store/encryption.dart';
 import '/store/notes.dart';
 import '/store/persistent.dart';
+import '/utils/copy_paste.dart';
+import '/utils/logger.dart';
 import './about.dart';
+import './edit.dart';
+import './settings.dart';
 
 ///
 class NoteListPage extends StatefulWidget {
   ///
   NoteListPage(
-      {required this.filterTag,
-      required this.searchText,
-      required this.isFirstPage});
+      {this.filterTag = '', this.searchText = '', this.isFirst = false});
 
+  /// filter tag
   final String filterTag;
 
+  /// search text
   final String searchText;
 
-  final bool isFirstPage;
+  /// is the first page
+  final bool isFirst;
+
+  static void show(BuildContext context,
+      {String tag = '',
+      String search = '',
+      bool isFirst = false,
+      bool isReplace = false}) {
+    final route = MaterialPageRoute(
+      builder: (context) =>
+          NoteListPage(filterTag: tag, searchText: search, isFirst: isFirst),
+    );
+    if (isReplace) {
+      // Replace the current page
+      Navigator.pushReplacement(context, route);
+    } else {
+      // Push a new page
+      Navigator.of(context).push(route);
+    }
+  }
 
   ///
   @override
@@ -46,21 +73,28 @@ class _NoteListPageState extends State<NoteListPage> {
 
   bool searching = false;
 
-  late Directory notesDir, attachmentsDir;
+  bool _isShowSubtitle = false;
+
+  late Directory notesDir;
+
+  bool _isLoading = false;
 
   bool _syncing = false;
 
   Set<String> _selectedNotes = {};
 
-  // late StreamSubscription _intentDataStreamSubscription;
-  // late StreamSubscription _intentSub;
-  // final _sharedFiles = <SharedMediaFile>[];
+  StreamSubscription? _streamSub;
 
+  final List<SharedMediaFile> _sharedFiles = [];
+
+  SharedMedia? _media;
+
+  ///
   @override
   void initState() {
-    store.currTag = widget.filterTag.isNotEmpty
+    store.currentTag = widget.filterTag.isNotEmpty
         ? widget.filterTag
-        : PrefService.getString('current_tag') ?? '';
+        : PrefService.getString(ca.currentTag) ?? '';
 
     if (widget.searchText.isNotEmpty) {
       _searchFieldCtrl.text = widget.searchText;
@@ -68,43 +102,14 @@ class _NoteListPageState extends State<NoteListPage> {
       searching = true;
     }
 
-    store.init();
-    _load().then((_) {
-      if (widget.isFirstPage) {
-        // todo MissingPluginException(No implementation found for method getLaunchAction on channel plugins.flutter.io/quick_actions)
-        // final quickActions = QuickActions();
-        // quickActions.initialize((shortcutType) {
-        //   if (shortcutType == 'action_create_note') {
-        //     createNewNote();
-        //   }
-        // });
-        // quickActions.setShortcutItems(<ShortcutItem>[
-        //   const ShortcutItem(
-        //       type: 'action_create_note',
-        //       localizedTitle: 'Create note',
-        //       icon: 'ic_shortcut_add'),
-        // ]);
+    _isShowSubtitle = PrefService.boolDefault(ca.isShowSubtitle);
 
-        //todo [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled Exception: MissingPluginException(No implementation found for method getInitialMedia on channel receive_sharing_intent/messages)
-        // // For sharing or opening urls/text coming from outside the app while the app is in the memory
-        // _intentSub =
-        //     ReceiveSharingIntent.instance.getMediaStream().listen((value) {
-        //   _sharedFiles.clear();
-        //   _sharedFiles.addAll(value);
+    if (appInfo.platform.isMobile) {
+      if (appInfo.platform.isAndroid && _media == null) _shareHandler();
+      if (widget.isFirst) _quickAction();
+    }
 
-        //   // handleSharedText(value); todo
-        //   ReceiveSharingIntent.instance.reset();
-        // }, onError: (err) {
-        //   print("getLinkStream error: $err");
-        // });
-
-        // // For sharing or opening urls/text coming from outside the app while the app is closed
-        // ReceiveSharingIntent.instance.getInitialMedia().then<void>((value) {
-        //   // handleSharedText(value ?? ''); todo
-        //   ReceiveSharingIntent.instance.reset();
-        // });
-      }
-    });
+    _load();
 
     super.initState();
   }
@@ -112,73 +117,107 @@ class _NoteListPageState extends State<NoteListPage> {
   ///
   @override
   void dispose() {
-    // _intentSub.cancel();
+    _streamSub?.cancel();
+
     super.dispose();
   }
 
   ///
   @override
   Widget build(BuildContext context) {
-    Logger().d('note_list build ===================');
+    logger.d((
+      'note_list build ===================',
+      store.allNotes.length,
+      store.shownNotes.length,
+      store.currentTag,
+      store.searchText,
+    ));
 
     return PopScope(
       canPop: false,
       onPopInvoked: _onPopInvoked,
       child: Scaffold(
         appBar: _appBar(),
-        body: store.shownNotes.isEmpty
-            ? LinearProgressIndicator()
-            : RefreshIndicator(
-                onRefresh: () async {
-                  await _load();
-                },
-                child: Scrollbar(
-                  child: ListView(
-                    primary: true,
-                    children: <Widget>[
-                      if (_syncing) ...[
-                        LinearProgressIndicator(),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child:
-                              Text('Syncing with ${store.syncMethodName}...'),
-                        ),
-                        Divider(color: themeData.dividerColor),
-                      ],
-                      _sortBar(),
-                      Container(
-                        height: 1,
-                        color: Colors.grey.shade300,
-                      ),
-                      for (Note note in store.shownNotes)
-                        !note.file.existsSync()
-                            ? ListTile(
-                                title: Text(
-                                  note.title,
-                                  style: TextStyle(
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              )
-                            : _slidableTitle(note),
-                    ],
+        body: RefreshIndicator(
+          onRefresh: () async {
+            await _load();
+          },
+          child: Scrollbar(
+            child: ListView(
+              primary: true,
+              children: <Widget>[
+                if (_syncing) ...[
+                  LinearProgressIndicator(),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('Syncing with ${store.syncMethodName}...'),
                   ),
+                  Divider(color: themeData.dividerColor),
+                ],
+                _sortBar(),
+                Container(
+                  height: 1,
+                  color: Colors.grey.shade300,
                 ),
-              ),
-        floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.add),
-          onPressed: () async => _createNewNote(),
+                // if (_isLoading) ...[
+                //   LinearProgressIndicator(),
+                // ],
+                // empty notice
+                if (store.shownNotes.isEmpty) ...[
+                  Center(
+                    heightFactor: 2,
+                    child: Text(
+                      S.current.Content_not_found,
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  )
+                ],
+                // note list
+                for (Note note in store.shownNotes)
+                  !note.file.existsSync()
+                      ? ListTile(
+                          title: Text(
+                            note.title,
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        )
+                      : _slidableItem(note),
+              ],
+            ),
+          ),
+        ),
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: <Widget>[
+            FloatingActionButton(
+              backgroundColor: cs.secondary.withOpacity(0.5),
+              child: Icon(Icons.refresh),
+              onPressed: () async => _load(),
+              heroTag: 'refresh',
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            FloatingActionButton(
+              backgroundColor: cs.secondary.withOpacity(0.5),
+              child: Icon(Icons.add),
+              onPressed: () async => _createNote(),
+            )
+          ],
         ),
         bottomNavigationBar: _selectedNotes.isEmpty ? null : _bottomBar(),
-        drawer: store.shownNotes.isEmpty ? Container() : _drawer(),
+        drawer: _drawer(),
       ),
     );
   }
 
   ///
   PreferredSizeWidget _appBar() {
-    Color searchFieldColor = Theme.of(context).colorScheme.onSecondary;
+    Color fgColor = themeData.colorScheme.onSecondary;
 
     return AppBar(
       title: Padding(
@@ -187,18 +226,18 @@ class _NoteListPageState extends State<NoteListPage> {
             ? TextField(
                 decoration: InputDecoration(
                   isDense: true,
-                  labelText: 'Search',
-                  labelStyle: TextStyle(color: searchFieldColor),
+                  labelText: S.current.Search,
+                  labelStyle: TextStyle(color: fgColor),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: searchFieldColor),
+                    borderSide: BorderSide(color: fgColor),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: searchFieldColor),
+                    borderSide: BorderSide(color: fgColor),
                   ),
                 ),
-                style: TextStyle(color: searchFieldColor),
+                style: TextStyle(color: fgColor),
                 autofocus: true,
-                cursorColor: searchFieldColor,
+                cursorColor: fgColor,
                 controller: _searchFieldCtrl,
                 onChanged: (text) {
                   store.searchText = _searchFieldCtrl.text;
@@ -209,7 +248,7 @@ class _NoteListPageState extends State<NoteListPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Text(appName),
+                  Text(ca.appName),
                   if (store.currentTag.length > 0)
                     Text(
                       store.currentTag,
@@ -260,24 +299,24 @@ class _NoteListPageState extends State<NoteListPage> {
             width: 16,
           ),
           DropdownButton<dynamic>(
-            value: PrefService.getString('sort_key') ?? 'title',
+            value: PrefService.getString(ca.sortKey) ?? ca.sortByTitle,
             underline: Container(),
             onChanged: (key) {
-              PrefService.setString('sort_key', key);
+              PrefService.setString(ca.sortKey, key);
               _filterAndSortNotes();
             },
             items: <DropdownMenuItem>[
               DropdownMenuItem(
-                value: 'title',
-                child: Text('Sort by Title'),
+                value: ca.sortByTitle,
+                child: Text(S.current.Sort_by_Title),
               ),
               DropdownMenuItem(
-                value: 'date_created',
-                child: Text('Sort by Date Created'),
+                value: ca.sortByCreated,
+                child: Text(S.current.Sort_by_Created_Date),
               ),
               DropdownMenuItem(
-                value: 'date_modified',
-                child: Text('Sort by Date Modified'),
+                value: ca.sortByUpdated,
+                child: Text(S.current.Sort_by_Updated_Date),
               ),
             ],
           ),
@@ -286,14 +325,14 @@ class _NoteListPageState extends State<NoteListPage> {
           ),
           InkWell(
             child: Icon(
-              (PrefService.getBool('sort_direction_asc') ?? true)
+              (PrefService.getBool(ca.isSortAsc) ?? true)
                   ? Icons.keyboard_arrow_down
                   : Icons.keyboard_arrow_up,
               size: 32,
             ),
             onTap: () {
-              PrefService.setBool('sort_direction_asc',
-                  !(PrefService.getBool('sort_direction_asc') ?? true));
+              PrefService.setBool(
+                  ca.isSortAsc, !(PrefService.getBool(ca.isSortAsc) ?? true));
 
               _filterAndSortNotes();
             },
@@ -310,32 +349,33 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   ///
-  Slidable _slidableTitle(Note note) {
+  Slidable _slidableItem(Note note) {
     return Slidable(
       // class upgrade: https://github.com/letsar/flutter_slidable/wiki/Migration-from-version-0.6.0-to-version-1.0.0
       startActionPane:
           ActionPane(motion: const DrawerMotion(), children: <Widget>[
         if (note.deleted) ...[
           SlidableAction(
-            label: 'Delete',
+            label: S.current.Delete,
             backgroundColor: Colors.red,
             icon: Icons.delete_forever,
             onPressed: (context) async {
               if (await showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                            title:
-                                Text('Do you really want to delete this note?'),
-                            content: Text('This will delete it permanently.'),
+                            title: Text(S.current
+                                .Do_you_really_want_to_delete_this_note),
+                            content:
+                                Text(S.current.This_will_delete_it_permanently),
                             actions: <Widget>[
                               TextButton(
-                                child: Text('Cancel'),
+                                child: Text(S.current.Cancel),
                                 onPressed: () {
                                   Navigator.of(context).pop(false);
                                 },
                               ),
                               TextButton(
-                                child: Text('Delete'),
+                                child: Text(S.current.Delete),
                                 onPressed: () {
                                   Navigator.of(context).pop(true);
                                 },
@@ -351,13 +391,13 @@ class _NoteListPageState extends State<NoteListPage> {
             },
           ),
           SlidableAction(
-            label: 'Restore',
+            label: S.current.Restore,
             backgroundColor: Colors.redAccent,
             icon: MdiIcons.deleteRestore,
             onPressed: (context) async {
               note.deleted = false;
 
-              PersistentStore.saveNote(note);
+              PersistentStore.saveNoteHeader(note);
 
               await _filterAndSortNotes();
             },
@@ -365,13 +405,13 @@ class _NoteListPageState extends State<NoteListPage> {
         ],
         if (!note.deleted)
           SlidableAction(
-            label: 'Trash',
+            label: S.current.Trash,
             backgroundColor: Colors.red,
             icon: Icons.delete,
             onPressed: (context) async {
               note.deleted = true;
 
-              PersistentStore.saveNote(note);
+              PersistentStore.saveNoteHeader(note);
 
               await _filterAndSortNotes();
             },
@@ -380,98 +420,170 @@ class _NoteListPageState extends State<NoteListPage> {
       endActionPane:
           ActionPane(motion: const DrawerMotion(), children: <Widget>[
         SlidableAction(
-          label: note.favorite ? 'Unstar' : 'Star',
-          backgroundColor: Colors.yellow,
-          icon: note.favorite ? MdiIcons.starOff : MdiIcons.star,
-          onPressed: (context) async {
-            note.favorite = !note.favorite;
-
-            PersistentStore.saveNote(note);
-
-            await _filterAndSortNotes();
-          },
-        ),
-        SlidableAction(
-          label: note.pinned ? 'Unpin' : 'Pin',
+          label: note.pinned ? S.current.Unpin : S.current.Pin,
           backgroundColor: Colors.green,
           icon: note.pinned ? MdiIcons.pinOff : MdiIcons.pin,
           onPressed: (context) async {
             note.pinned = !note.pinned;
 
-            PersistentStore.saveNote(note);
+            PersistentStore.saveNoteHeader(note);
+
+            await _filterAndSortNotes();
+          },
+        ),
+        SlidableAction(
+          label: note.favorite ? S.current.Unfavorite : S.current.Favorite,
+          backgroundColor: Colors.yellow,
+          icon: note.favorite ? MdiIcons.starOff : MdiIcons.star,
+          onPressed: (context) async {
+            note.favorite = !note.favorite;
+
+            PersistentStore.saveNoteHeader(note);
 
             await _filterAndSortNotes();
           },
         ),
       ]),
-      child: ListTile(
-        selected: _selectedNotes.contains(note.title),
-        selectedColor: Theme.of(context).colorScheme.primary,
-        title: Text(note.title),
-        // textColor: Theme.of(context).textTheme.bodySmall?.color,
-        subtitle: store.isDendronModeEnabled
-            ? Text(note.file.path.substring(store.notesDir.path.length + 1))
-            : null,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            if (note.attachments.isNotEmpty) Icon(MdiIcons.paperclip),
-            if (note.favorite) Icon(MdiIcons.star),
-            if (note.pinned) Icon(MdiIcons.pin),
-            if (note.tags.contains('color/red'))
-              Container(
-                color: Colors.red,
-                width: 5,
-              ),
-            if (note.tags.contains('color/yellow'))
-              Container(
-                color: Colors.yellow,
-                width: 5,
-              ),
-            if (note.tags.contains('color/green'))
-              Container(
-                color: Colors.green,
-                width: 5,
-              ),
-            if (note.tags.contains('color/blue'))
-              Container(
-                color: Colors.blue,
-                width: 5,
-              ),
-          ],
-        ),
-        onTap: () async {
-          if (_selectedNotes.isNotEmpty) {
-            setState(() {
-              if (_selectedNotes.contains(note.title)) {
-                _selectedNotes.remove(note.title);
-              } else {
-                _selectedNotes.add(note.title);
-              }
-            });
-            return;
-          }
-
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => EditPage(
-                note,
-                store,
-              ),
+      child: Consumer<SettingNotifier>(
+        builder: (context, notifier, child) {
+          return ListTile(
+            selected: _selectedNotes.contains(note.title),
+            selectedColor: Theme.of(context).colorScheme.primary,
+            title: Text(note.title, maxLines: 1),
+            subtitle: notifier.isShowSubtitle ?? _isShowSubtitle
+                ? _subtitle(note)
+                : null,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                if (note.pinned) Icon(MdiIcons.pin),
+                if (note.favorite) Icon(MdiIcons.star),
+                if (note.encrypted)
+                  note.isDecryptSuccess
+                      ? Icon(MdiIcons.lockOpen)
+                      : Icon(MdiIcons.lock),
+                if (note.attachments.isNotEmpty) Icon(MdiIcons.paperclip),
+                if (note.tags.contains('color/red'))
+                  Container(
+                    color: Colors.red,
+                    width: 5,
+                  ),
+                if (note.tags.contains('color/yellow'))
+                  Container(
+                    color: Colors.yellow,
+                    width: 5,
+                  ),
+                if (note.tags.contains('color/green'))
+                  Container(
+                    color: Colors.green,
+                    width: 5,
+                  ),
+                if (note.tags.contains('color/blue'))
+                  Container(
+                    color: Colors.blue,
+                    width: 5,
+                  ),
+              ],
             ),
+            onTap: () async {
+              if (_selectedNotes.isNotEmpty) {
+                setState(() {
+                  if (_selectedNotes.contains(note.title)) {
+                    _selectedNotes.remove(note.title);
+                  } else {
+                    _selectedNotes.add(note.title);
+                  }
+                });
+                return;
+              }
+              //  password is required for encrypted documents
+              if (note.encrypted && !note.isDecryptSuccess) {
+                TextEditingController ctrl = TextEditingController();
+                final (cd, canRetry) = note.canRetry(false);
+
+                String pwd = await showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text(S.current.Enter_Password),
+                        content: TextField(
+                          controller: ctrl,
+                          autofocus: true,
+                          obscureText: true,
+                          readOnly: !canRetry,
+                          decoration: InputDecoration(
+                            hintText: canRetry
+                                ? S.current.Enter_Password
+                                : S.current.Please_try_again_in_cd_second(cd),
+                          ),
+                          onSubmitted: (str) {
+                            Navigator.of(context).pop(str);
+                          },
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            child: Text(S.current.Cancel),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: Text(S.current.Confirm),
+                            onPressed: canRetry
+                                ? () => Navigator.of(context).pop(ctrl.text)
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ) ??
+                    '';
+                if (pwd.isNotEmpty) {
+                  note.encryption = Encryption(key: pwd);
+                } else {
+                  return;
+                }
+              }
+
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => EditPage(
+                    note,
+                    store,
+                  ),
+                ),
+              );
+              _filterAndSortNotes();
+            },
+            onLongPress: () {
+              setState(() {
+                if (_selectedNotes.contains(note.title)) {
+                  _selectedNotes.remove(note.title);
+                } else {
+                  _selectedNotes.add(note.title);
+                }
+              });
+            },
           );
-          _filterAndSortNotes();
-        },
-        onLongPress: () {
-          setState(() {
-            if (_selectedNotes.contains(note.title)) {
-              _selectedNotes.remove(note.title);
-            } else {
-              _selectedNotes.add(note.title);
-            }
-          });
         },
       ),
+    );
+  }
+
+  ///
+  Widget _subtitle(Note note) {
+    logger.d(('subtitle', note.tags));
+    String path = note.file.path.substring(store.notesDir.path.length + 1);
+    String tag = note.tags
+        .where((t) => !t.startsWith('#/') && !t.startsWith('Dendron/'))
+        .toList()
+        .join(', ');
+
+    return AutoSizeText(
+      '  ${formatPath(path)} | $tag',
+      style: TextStyle(
+          fontSize: 13, color: Colors.grey, fontStyle: FontStyle.italic),
+      minFontSize: 9,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -487,14 +599,13 @@ class _NoteListPageState extends State<NoteListPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                      '${_selectedNotes.length} note${_selectedNotes.length > 1 ? 's' : ''} selected'),
+                  Text(S.current.countSelectedNotes(_selectedNotes.length)),
                   Row(
                     children: <Widget>[
                       InkWell(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-                          child: Text('ALL',
+                          child: Text(S.current.ALL,
                               style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                         onTap: () {
@@ -507,7 +618,7 @@ class _NoteListPageState extends State<NoteListPage> {
                       InkWell(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-                          child: Text('NONE',
+                          child: Text(S.current.NONE,
                               style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                         onTap: () {
@@ -523,262 +634,269 @@ class _NoteListPageState extends State<NoteListPage> {
               ),
             ),
             IconButton(
-              icon: Icon(MdiIcons.star),
-              onPressed: () {
-                showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                          title: Text('Favorite'),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              children: <Widget>[
-                                ListTile(
-                                  leading: Icon(MdiIcons.star),
-                                  title: Text('Favorite selected'),
-                                  onTap: () => _modifyAll((Note note) async {
-                                    note.favorite = true;
-
-                                    PersistentStore.saveNote(note);
-                                  }),
-                                ),
-                                ListTile(
-                                  leading: Icon(MdiIcons.starOff),
-                                  title: Text('Unfavorite selected'),
-                                  onTap: () => _modifyAll((Note note) async {
-                                    note.favorite = false;
-                                    PersistentStore.saveNote(note);
-                                  }),
-                                )
-                              ],
-                            ),
-                          ),
-                        ));
-              },
-            ),
-            IconButton(
               icon: Icon(MdiIcons.pin),
               onPressed: () {
                 showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                          title: Text('Pin'),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              children: <Widget>[
-                                ListTile(
-                                  leading: Icon(MdiIcons.pin),
-                                  title: Text('Pin selected'),
-                                  onTap: () => _modifyAll((Note note) async {
-                                    note.pinned = true;
-                                    PersistentStore.saveNote(note);
-                                  }),
-                                ),
-                                ListTile(
-                                  leading: Icon(MdiIcons.pinOff),
-                                  title: Text('Unpin selected'),
-                                  onTap: () => _modifyAll((Note note) async {
-                                    note.pinned = false;
-                                    PersistentStore.saveNote(note);
-                                  }),
-                                )
-                              ],
-                            ),
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(S.current.Pin),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          ListTile(
+                            leading: Icon(MdiIcons.pin),
+                            title: Text(S.current.Pin_selected),
+                            onTap: () => _modifyAll((Note note) async {
+                              note.pinned = true;
+                              PersistentStore.saveNoteHeader(note);
+                            }),
                           ),
-                        ));
+                          ListTile(
+                            leading: Icon(MdiIcons.pinOff),
+                            title: Text(S.current.Unpin_selected),
+                            onTap: () => _modifyAll(
+                              (Note note) async {
+                                note.pinned = false;
+                                PersistentStore.saveNoteHeader(note);
+                              },
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              icon: Icon(MdiIcons.star),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(S.current.Favorite),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          ListTile(
+                            leading: Icon(MdiIcons.star),
+                            title: Text(S.current.Favorite_selected),
+                            onTap: () => _modifyAll((Note note) async {
+                              note.favorite = true;
+
+                              PersistentStore.saveNoteHeader(note);
+                            }),
+                          ),
+                          ListTile(
+                            leading: Icon(MdiIcons.starOff),
+                            title: Text(S.current.Unfavorite_selected),
+                            onTap: () => _modifyAll(
+                              (Note note) async {
+                                note.favorite = false;
+                                PersistentStore.saveNoteHeader(note);
+                              },
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                );
               },
             ),
             IconButton(
               icon: Icon(MdiIcons.tag),
               onPressed: () {
                 showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                          title: Text('Tags'),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              children: <Widget>[
-                                ListTile(
-                                  leading: Icon(MdiIcons.tagPlus),
-                                  title: Text('Add Tag to selected notes'),
-                                  onTap: () async {
-                                    /*
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(S.current.Tags),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          ListTile(
+                            leading: Icon(MdiIcons.tagPlus),
+                            title: Text(S.current.Add_Tag_to_selected_notes),
+                            onTap: () async {
+                              /*
                                                     Navigator.of(context).pop(); */
-                                    TextEditingController ctrl =
-                                        TextEditingController();
-                                    String newTag = await showDialog(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                            title: Text('Add Tag'),
-                                            content: TextField(
-                                              controller: ctrl,
-                                              autofocus: true,
-                                              onSubmitted: (str) {
-                                                Navigator.of(context).pop(str);
-                                              },
-                                            ),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                child: Text('Cancel'),
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                              TextButton(
-                                                child: Text('Add'),
-                                                onPressed: () {
-                                                  Navigator.of(context)
-                                                      .pop(ctrl.text);
-                                                },
-                                              ),
+                              TextEditingController ctrl =
+                                  TextEditingController();
+                              String newTag = await showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(S.current.Add_Tag),
+                                      content: TextField(
+                                        controller: ctrl,
+                                        autofocus: true,
+                                        onSubmitted: (str) {
+                                          Navigator.of(context).pop(str);
+                                        },
+                                      ),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          child: Text(S.current.Cancel),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text(S.current.Add),
+                                          onPressed: () {
+                                            Navigator.of(context)
+                                                .pop(ctrl.text);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ) ??
+                                  '';
+
+                              if (newTag.isNotEmpty) {
+                                // debugPrint('ADD');
+                                await _modifyAll((Note note) async {
+                                  note.tags.add(newTag);
+                                  PersistentStore.saveNoteHeader(note);
+                                });
+                                store.updateTagList();
+                              } else {
+                                /* Navigator.of(context)
+                                                          .pop(); */
+                              }
+                            },
+                          ),
+                          ListTile(
+                            leading: Icon(MdiIcons.tagMinus),
+                            title:
+                                Text(S.current.Remove_Tag_from_selected_notes),
+                            onTap: () async {
+                              Set<String> tags = {};
+
+                              for (String title in _selectedNotes) {
+                                Note note = store.getNote(title);
+                                tags.addAll(note.tags);
+                              }
+
+                              String tagToRemove = await showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                        title: Text(
+                                            S.current.Choose_Tag_to_remove),
+                                        content: SingleChildScrollView(
+                                          child: Column(
+                                            children: <Widget>[
+                                              for (String tag in tags)
+                                                ListTile(
+                                                    title: Text(tag),
+                                                    onTap: () {
+                                                      Navigator.of(context)
+                                                          .pop(tag);
+                                                    })
                                             ],
                                           ),
-                                        ) ??
-                                        '';
-
-                                    if (newTag.isNotEmpty) {
-                                      print('ADD');
-                                      await _modifyAll((Note note) async {
-                                        note.tags.add(newTag);
-                                        PersistentStore.saveNote(note);
-                                      });
-                                      store.updateTagList();
-                                    } else {
-                                      /* Navigator.of(context)
-                                                          .pop(); */
-                                    }
+                                        ),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            child: Text(S.current.Cancel),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                        ],
+                                      ));
+                              if (tagToRemove.isNotEmpty) {
+                                // debugPrint('REMOVE');
+                                await _modifyAll(
+                                  (Note note) async {
+                                    note.tags.remove(tagToRemove);
+                                    PersistentStore.saveNoteHeader(note);
                                   },
-                                ),
-                                ListTile(
-                                  leading: Icon(MdiIcons.tagMinus),
-                                  title: Text('Remove Tag from selected notes'),
-                                  onTap: () async {
-                                    Set<String> tags = {};
-
-                                    for (String title in _selectedNotes) {
-                                      Note note = store.getNote(title);
-                                      tags.addAll(note.tags);
-                                    }
-
-                                    String tagToRemove = await showDialog(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                              title:
-                                                  Text('Choose Tag to remove'),
-                                              content: SingleChildScrollView(
-                                                child: Column(
-                                                  children: <Widget>[
-                                                    for (String tag in tags)
-                                                      ListTile(
-                                                          title: Text(tag),
-                                                          onTap: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop(tag);
-                                                          })
-                                                  ],
-                                                ),
-                                              ),
-                                              actions: <Widget>[
-                                                TextButton(
-                                                  child: Text('Cancel'),
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                ),
-                                              ],
-                                            ));
-                                    if (tagToRemove.isNotEmpty) {
-                                      print('REMOVE');
-                                      await _modifyAll((Note note) async {
-                                        note.tags.remove(tagToRemove);
-                                        PersistentStore.saveNote(note);
-                                      });
-                                      store.updateTagList();
-                                    }
-                                    /*                      _modifyAll(
-                                                      (Note note) async {
-                                                    note.pinned = false;
-                                                    PersistentStore.saveNote(
-                                                        note);
-                                                  }) */
-                                  },
-                                )
-                              ],
-                            ),
-                          ),
-                        ));
+                                );
+                                store.updateTagList();
+                              }
+                            },
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                );
               },
             ),
             IconButton(
               icon: Icon(MdiIcons.delete),
               onPressed: () {
                 showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                          title: Text('Delete selected'),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              children: <Widget>[
-                                ListTile(
-                                  leading: Icon(MdiIcons.delete),
-                                  title: Text('Move to trash'),
-                                  onTap: () => _modifyAll((Note note) {
-                                    note.deleted = true;
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(S.current.Delete_selected),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          ListTile(
+                            leading: Icon(MdiIcons.delete),
+                            title: Text(S.current.Move_to_trash),
+                            onTap: () => _modifyAll((Note note) {
+                              note.deleted = true;
 
-                                    PersistentStore.saveNote(note);
-                                  }),
-                                ),
-                                ListTile(
-                                  leading: Icon(MdiIcons.deleteRestore),
-                                  title: Text('Restore from trash'),
-                                  onTap: () => _modifyAll((Note note) {
-                                    note.deleted = false;
-
-                                    PersistentStore.saveNote(note);
-                                  }),
-                                ),
-                                ListTile(
-                                    leading: Icon(MdiIcons.deleteForever),
-                                    title: Text('Delete forever'),
-                                    onTap: () async {
-                                      bool isDelete = await showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                    title: Text(
-                                                        'Do you really want to delete the selected notes?'),
-                                                    content: Text(
-                                                        'This will delete them permanently.'),
-                                                    actions: <Widget>[
-                                                      TextButton(
-                                                        child: Text('Cancel'),
-                                                        onPressed: () {
-                                                          Navigator.of(context)
-                                                              .pop(false);
-                                                        },
-                                                      ),
-                                                      TextButton(
-                                                        child: Text('Delete'),
-                                                        onPressed: () {
-                                                          Navigator.of(context)
-                                                              .pop(true);
-                                                        },
-                                                      )
-                                                    ],
-                                                  )) ??
-                                          false;
-                                      if (isDelete) {
-                                        await _modifyAll((Note note) {
-                                          store.allNotes.remove(note);
-
-                                          PersistentStore.deleteNote(note);
-                                          _selectedNotes.remove(note.title);
-                                        });
-                                      }
-                                    })
-                              ],
-                            ),
+                              PersistentStore.saveNoteHeader(note);
+                            }),
                           ),
-                        ));
+                          ListTile(
+                            leading: Icon(MdiIcons.deleteRestore),
+                            title: Text(S.current.Restore_from_trash),
+                            onTap: () => _modifyAll((Note note) {
+                              note.deleted = false;
+
+                              PersistentStore.saveNoteHeader(note);
+                            }),
+                          ),
+                          ListTile(
+                            leading: Icon(MdiIcons.deleteForever),
+                            title: Text(S.current.Delete_forever),
+                            onTap: () async {
+                              bool isDelete = await showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                            title: Text(S.current
+                                                .Do_you_really_want_to_delete_the_selected_notes),
+                                            content: Text(S.current
+                                                .This_will_delete_them_permanently),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                child: Text(S.current.Cancel),
+                                                onPressed: () {
+                                                  Navigator.of(context)
+                                                      .pop(false);
+                                                },
+                                              ),
+                                              TextButton(
+                                                child: Text(S.current.Delete),
+                                                onPressed: () {
+                                                  Navigator.of(context)
+                                                      .pop(true);
+                                                },
+                                              )
+                                            ],
+                                          )) ??
+                                  false;
+                              if (isDelete) {
+                                await _modifyAll(
+                                  (Note note) {
+                                    store.allNotes.remove(note);
+
+                                    PersistentStore.deleteNote(note);
+                                    _selectedNotes.remove(note.title);
+                                  },
+                                );
+                              }
+                            },
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                );
               },
             ),
           ],
@@ -802,8 +920,7 @@ class _NoteListPageState extends State<NoteListPage> {
               //     return Text('${info?.appName} ${info?.version}');
               //   },
               // ),
-              title:
-                  Text('${appName} ${appInfo.package.version}'),
+              title: Text('${ca.appName} ${appInfo.package.version}'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -834,7 +951,7 @@ class _NoteListPageState extends State<NoteListPage> {
               _filterAndSortNotes();
             },
             icon: MdiIcons.noteText,
-            displayTag: 'All Notes',
+            displayTag: S.current.All_Notes,
             hasSubTags: false,
           ),
           TagDropdown(
@@ -845,13 +962,14 @@ class _NoteListPageState extends State<NoteListPage> {
               _filterAndSortNotes();
             },
             icon: MdiIcons.star,
+            displayTag: S.current.Favorite,
             hasSubTags: false,
           ),
           for (String tag in store.rootTags)
             TagDropdown(
               tag,
-              store /*
-                        store.allTags.where((t) => t.startsWith(tag)).toList() */
+              store
+              //  store.allTags.where((t) => t.startsWith(tag)).toList()
               ,
               () {
                 Navigator.of(context).pop();
@@ -867,6 +985,7 @@ class _NoteListPageState extends State<NoteListPage> {
               _filterAndSortNotes();
             },
             icon: MdiIcons.labelOff,
+            displayTag: S.current.Untagged,
             hasSubTags: false,
           ),
           TagDropdown(
@@ -877,67 +996,12 @@ class _NoteListPageState extends State<NoteListPage> {
               _filterAndSortNotes();
             },
             icon: Icons.delete,
+            displayTag: S.current.Trash,
           ),
         ],
       ),
     );
   }
-  // handleSharedText(String value) {
-  //   if (value.isEmpty) return;
-
-  //   showDialog(
-  //       context: context,
-  //       builder: (context) => AlertDialog(
-  //             title: Text('Received text'),
-  //             content:
-  //                 Scrollbar(child: SingleChildScrollView(child: Text(value))),
-  //             actions: [
-  //               TextButton(
-  //                   onPressed: () {
-  //                     Navigator.of(context).pop();
-  //                   },
-  //                   child: Text('Cancel')),
-  //               // TextButton(onPressed: () {}, child: Text('Append to note')),
-  //               TextButton(
-  //                   onPressed: () {
-  //                     Navigator.of(context).pop();
-  //                     createNewNote(value);
-  //                   },
-  //                   child: Text('Create new note')),
-  //             ],
-  //           ));
-  // }
-
-  ///
-  // Future<bool> _onWillPop() async {
-  //   if (_selectedNotes.isNotEmpty) {
-  //     setState(() {
-  //       _selectedNotes = {};
-  //     });
-  //     return false;
-  //   }
-  //   if (!widget.isFirstPage) return true;
-  //   return await showDialog(
-  //           context: context,
-  //           builder: (context) => AlertDialog(
-  //                 title: Text('Do you want to exit the app?'),
-  //                 actions: <Widget>[
-  //                   TextButton(
-  //                     child: Text('Cancel'),
-  //                     onPressed: () {
-  //                       Navigator.of(context).pop(false);
-  //                     },
-  //                   ),
-  //                   TextButton(
-  //                     child: Text('Exit'),
-  //                     onPressed: () {
-  //                       Navigator.of(context).pop(true);
-  //                     },
-  //                   )
-  //                 ],
-  //               )) ??
-  //       false;
-  // }
 
   ///
   void _deselectAllNotes() {
@@ -955,26 +1019,26 @@ class _NoteListPageState extends State<NoteListPage> {
       return;
     }
 
-    var shouldPop = false;
+    bool shouldPop = false;
     if (_selectedNotes.isNotEmpty) {
       _deselectAllNotes();
       shouldPop = false;
-    } else if (!widget.isFirstPage) {
+    } else if (!widget.isFirst) {
       shouldPop = true;
     } else {
       shouldPop = await showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                    title: Text('Do you want to exit the app?'),
+                    title: Text(S.current.Do_you_want_to_exit_the_app),
                     actions: <Widget>[
                       TextButton(
-                        child: Text('Cancel'),
+                        child: Text(S.current.Cancel),
                         onPressed: () {
                           Navigator.of(context).pop(false);
                         },
                       ),
                       TextButton(
-                        child: Text('Exit'),
+                        child: Text(S.current.Exit),
                         onPressed: () {
                           Navigator.of(context).pop(true);
                         },
@@ -982,6 +1046,12 @@ class _NoteListPageState extends State<NoteListPage> {
                     ],
                   )) ??
           false;
+
+      if (shouldPop) {
+        // exit app
+        SystemNavigator.pop();
+        return;
+      }
     }
 
     if (context.mounted && shouldPop) {
@@ -995,16 +1065,18 @@ class _NoteListPageState extends State<NoteListPage> {
     setState(() {});
   }
 
-  ///
-  Future _load() async {
-    print('LOAD');
-    await store.listNotes();
+  /// load note list
+  Future<void> _load() async {
+    if (_isLoading) return;
 
-    store.updateTagList();
+    _isLoading = true;
+    // if (mounted) setState(() {});
 
-    store.filterAndSortNotes();
+    await store.refresh();
+    // await Future.delayed(Duration(seconds: 3), () => debugPrint("Loading"));
 
-    setState(() {});
+    _isLoading = false;
+    if (mounted) setState(() {});
   }
 
   ///
@@ -1020,8 +1092,8 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   ///
-  Future _refresh() async {
-    print('REFRESH');
+  Future<void> _refresh() async {
+    debugPrint('REFRESH');
     if (store.syncMethod.isEmpty) {
       await _load();
     } else {
@@ -1033,11 +1105,11 @@ class _NoteListPageState extends State<NoteListPage> {
         showDialog(
             context: context,
             builder: (context) => AlertDialog(
-                  title: Text('Sync Error'),
+                  title: Text(S.current.Sync_Error),
                   content: Text(result),
                   actions: <Widget>[
                     TextButton(
-                      child: Text('Ok'),
+                      child: Text(S.current.Ok),
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
@@ -1050,62 +1122,19 @@ class _NoteListPageState extends State<NoteListPage> {
         _syncing = false;
       });
 
-      await store.listNotes();
+      await store.refresh();
 
-      store.updateTagList();
-
-      store.filterAndSortNotes();
-
-      if (!mounted) return;
-      setState(() {});
+      if (mounted) setState(() {});
     }
   }
 
   ///
-  Future<void> _createNewNote([String content = '']) async {
-    Note newNote = Note();
-    int i = 1;
-    while (true) {
-      String title = 'Untitled';
-      if (i > 1) title += ' ($i)';
-
-      bool exists = false;
-
-      for (Note note in store.allNotes) {
-        if (title == note.title) {
-          exists = true;
-          break;
-        }
-      }
-
-      if (!exists) {
-        newNote.title = title;
-        break;
-      }
-
-      i++;
-    }
-
-    if (store.isDendronModeEnabled) {
-      newNote.isMillisecond = true;
-      newNote.idUpdatedInsteadOfModified = true;
-      newNote.additionalFrontMatterKeys = {
-        'id': Uuid().v4(),
-        'desc': '',
-      };
-    }
-
-    newNote.created = DateTime.now();
-    newNote.modified = newNote.created;
-
-    newNote.file = File('${store.notesDir.path}/${newNote.title}.md');
-    store.allNotes.add(newNote);
+  Future<void> _createNote([String content = '', String title = '']) async {
+    Note newNote = await store.createNote(content, title);
 
     _filterAndSortNotes();
 
-    PrefService.setBool('editor_mode_switcher_is_preview', false);
-
-    await PersistentStore.saveNote(newNote, '# ${newNote.title}\n\n$content');
+    PrefService.setBool(ca.isPreviewMode, false);
 
     await Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => EditPage(
@@ -1113,14 +1142,141 @@ class _NoteListPageState extends State<NoteListPage> {
               store,
               autofocus: true,
             )));
-    _filterAndSortNotes();
+    // _filterAndSortNotes();
   }
 
-  /* _setFilterTagAndRefresh(BuildContext context, String tag) {
-    Navigator.of(context).pop();
-    store.currentTag = tag;
-    _filterAndSortNotes();
-  } */
+  ///
+  void _quickAction() {
+    final quickActions = QuickActions();
+    quickActions.initialize((type) {
+      if (type == 'action_create_note') {
+        _createNote();
+      }
+    });
+    quickActions.setShortcutItems(<ShortcutItem>[
+      ShortcutItem(
+        type: 'action_create_note',
+        localizedTitle: S.current.Create_note,
+        icon: 'ic_shortcut_add',
+      ),
+    ]);
+  }
+
+  ///
+  /// Platform messages are asynchronous, so we initialize in an async method.
+  Future<void> _shareHandler() async {
+    final handler = ShareHandlerPlatform.instance;
+    _media = await handler.getInitialSharedMedia();
+
+    handler.sharedMediaStream.listen((SharedMedia media) {
+      // snackBar(context, media.content);
+      // snackBar(context, "Shared files: ${media.attachments?.length}");
+
+      if (media.content == null || media.content!.isEmpty) return;
+
+      String? content = media.content!;
+
+      logger.d(('_shareHandler', content, Uri.decodeFull(content)));
+      if (content.startsWith('content://')) {
+        // Create note from shared file content
+        // Android 11+ not supported (OS Error: Permission denied, errno = 13)
+        // Android 11 shared (eg. content://com.android.externalstorage.documents/document/primary:Documents/example2.md)
+        // Android 9 shared (eg. content://com.android.providers.downloads.documents/document/raw:/storage/emulated/0/Download/example2.md)
+        content = Uri.decodeFull(content);
+        // Restricted file type
+        if (!['.md', '.txt'].contains(p.extension(content))) return;
+
+        int start = content.indexOf(':', 10);
+        String path =
+            start >= 0 ? content.substring(start + 1) : Uri.parse(content).path;
+        // Android 11+ path
+        if (!path.startsWith('/')) path = '/storage/emulated/0/$path';
+
+        content = readAsString(path);
+        if (content == null || content.isEmpty) return;
+        _createNote(content, mdTitle(content, isFilename: true));
+      } else {
+        // Create note from shared text
+        _handleSharedText(content);
+      }
+    });
+  }
+
+  ///
+  void _receiveSharing() {
+    // For sharing or opening urls/text coming from outside the app while the app is in the memory
+    _streamSub = ReceiveSharingIntent.instance.getMediaStream().listen((v) {
+      _sharedFiles.clear();
+      _sharedFiles.addAll(v);
+      logger.d((
+        'getMediaStream',
+        _sharedFiles.map((f) {
+          var m = f.toMap();
+          m['content'] = readAsString(m['path']);
+          snackBar(context, m.toString());
+          return m;
+        }),
+      ));
+
+      // _handleSharedText(v);
+      ReceiveSharingIntent.instance.reset();
+    }, onError: (err) {
+      debugPrint("getMediaStream error: $err");
+    });
+
+    // For sharing or opening urls/text coming from outside the app while the app is closed
+    ReceiveSharingIntent.instance.getInitialMedia().then<void>((v) {
+      _sharedFiles.clear();
+      _sharedFiles.addAll(v);
+      logger.d((
+        'getInitialMedia',
+        _sharedFiles.map((f) {
+          var m = f.toMap();
+          m['content'] = readAsString(m['path']);
+          snackBar(context, m.toString());
+          return m;
+        }),
+      ));
+
+      // _handleSharedText(v ?? '');
+      ReceiveSharingIntent.instance.reset();
+    });
+  }
+
+  ///
+  _handleSharedText(String v) {
+    if (v.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(S.current.Received_text),
+        content: Scrollbar(child: SingleChildScrollView(child: Text(v))),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text(S.current.Cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              CopyPaste.copy(v);
+            },
+            child: Text(S.current.Only_copy),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _createNote(v);
+            },
+            child: Text(S.current.Create_note),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 ///
@@ -1166,12 +1322,10 @@ class _TagDropdownState extends State<TagDropdown> {
   @override
   void initState() {
     super.initState();
+    _hasSubTags = widget.hasSubTags != null
+        ? widget.hasSubTags!
+        : store.getSubTags(widget.tag).length > 0;
 
-    if (widget.hasSubTags == null) {
-      _hasSubTags = store.getSubTags(widget.tag).length > 0;
-    } else {
-      _hasSubTags = widget.hasSubTags as bool;
-    }
     _isSelected = store.currentTag == widget.tag;
     _folded = widget.foldedByDefault;
     if (store.currentTag.startsWith(widget.tag)) _folded = false;

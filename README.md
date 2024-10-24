@@ -1,10 +1,11 @@
-<img align="left" width="120" height="120" src="https://github.com/inote-flutter/inote/raw/master/assets/icon/icon_ios.png" alt="App Icon">
+<img align="left" width="120" height="120" src="https://github.com/punote/punote/raw/main/assets/icon/icon-192.png" alt="App Icon">
 
-# iNote
+# PuNote
 
 A markdown-based note-taking app for Android, iOS, macOS, Windows and Linux.
 
-![MIT License](https://img.shields.io/github/license/inote-flutter/inote?style=for-the-badge)
+![](https://img.shields.io/github/stars/punote/punote.md.svg) ![](https://img.shields.io/github/forks/punote/punote.md.svg) ![](https://img.shields.io/github/tag/punote/punote.md.svg) ![](https://img.shields.io/github/release/punote/punote.md.svg) ![](https://img.shields.io/github/issues/punote/punote.md.svg) 
+![MIT License](https://img.shields.io/github/license/punote/punote?style=for-the-badge)
 
 ## Features
 
@@ -20,7 +21,7 @@ A markdown-based note-taking app for Android, iOS, macOS, Windows and Linux.
 
 ## Download
 
-[https://github.com/inote-flutter/inote/releases](https://github.com/inote-flutter/inote/releases)
+[https://github.com/punote/punote/releases](https://github.com/punote/punote/releases)
 
 ## License
 

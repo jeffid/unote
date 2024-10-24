@@ -3,11 +3,10 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  fullscreen_window
+  local_auth_windows
   permission_handler_windows
+  share_plus
   url_launcher_windows
-  webf
-  webview_win_floating
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
