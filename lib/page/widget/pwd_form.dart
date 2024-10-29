@@ -42,7 +42,7 @@ class PwdForm extends StatefulWidget {
     Key? super.key,
     String? errorText,
     String? helpText,
-    String valueExp = r'^\d{5}$',
+    String valueExp = '^\\d{${PwdForm.screenLockPwdLen}}\$',
     int maxLen = PwdForm.screenLockPwdLen,
   })  : _errorText = errorText ?? S.current.Please_enter_digits(maxLen),
         _helpText = helpText ?? S.current.Please_enter_digits(maxLen),
@@ -53,7 +53,8 @@ class PwdForm extends StatefulWidget {
     Key? super.key,
     String? errorText,
     String? helpText,
-    String valueExp = r'^\d{4,30}$',
+    String valueExp =
+        '^\\d{${PwdForm.encryptionPwdMinLen},${PwdForm.encryptionPwdMaxLen}}\$',
     int minLen = PwdForm.encryptionPwdMinLen,
     int maxLen = PwdForm.encryptionPwdMaxLen,
   })  : _errorText =
@@ -63,10 +64,10 @@ class PwdForm extends StatefulWidget {
         _valueRegExp = RegExp(valueExp),
         _maxLength = maxLen;
 
-  static const int screenLockPwdLen = 5; // valueExp
+  static const int screenLockPwdLen = 5;
 
-  static const int encryptionPwdMinLen = 4;
-  static const int encryptionPwdMaxLen = 30; // valueExp
+  static const int encryptionPwdMinLen = 6;
+  static const int encryptionPwdMaxLen = 64;
 
   final String _errorText;
   final String _helpText;

@@ -32,6 +32,8 @@ class _SettingsPageState extends State<SettingsPage> {
   ///
   NotesStore get store => widget.store;
 
+  double pwdLenThreshold = 20;
+
   ///
   @override
   void initState() {
@@ -47,7 +49,12 @@ class _SettingsPageState extends State<SettingsPage> {
       ca.canAutoListMark: true,
       ca.isDendronMode: false,
       ca.debugLogsSync: false,
+      ca.isPasswordLengthening: false,
+      ca.passwordLengthThreshold: 20.0,
     });
+
+    pwdLenThreshold = PrefService.doubleDefault(ca.passwordLengthThreshold);
+
     super.initState();
   }
 
@@ -382,7 +389,35 @@ class _SettingsPageState extends State<SettingsPage> {
           activeColor: accentColor,
           inactiveThumbColor: accentColor,
         ),
-
+        SwitchPreference(
+          S.current.Password_lengthening,
+          ca.isPasswordLengthening,
+          desc: S.current.Password_length_threshold(
+                  pwdLenThreshold.toStringAsFixed(0)) +
+              " ; " +
+              S.current.Lengthen_the_original_password,
+          activeColor: accentColor,
+          inactiveThumbColor: accentColor,
+        ),
+        Slider(
+          value: pwdLenThreshold,
+          min: 10.0,
+          max: 100.0,
+          divisions: 9,
+          label: pwdLenThreshold.toStringAsFixed(0),
+          activeColor: accentColor,
+          inactiveColor: accentColor.withOpacity(0.5),
+          onChangeEnd: (value) {
+            // debugPrint('start:$value');
+            PrefService.setDouble(ca.passwordLengthThreshold, value);
+          },
+          onChanged: (value) {
+            // debugPrint('slider onChanged :$value');
+            setState(() {
+              pwdLenThreshold = value;
+            });
+          },
+        ),
         // /// Preview
         // PreferenceTitle(S.current.Preview),
         // SwitchPreference(

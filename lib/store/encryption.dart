@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:cryptography/cryptography.dart';
+import 'package:preferences/preference_service.dart';
 
+import '/constant/app.dart' as ca;
 import '/utils/logger.dart';
 
 /// sha Digest
@@ -34,6 +36,20 @@ String s256Str(String str) {
 /// password hash string
 String pwdHashStr(String str) {
   return shaStr(List.filled(3, str).join('-'), hash: crypto.sha256);
+}
+
+/// password lengthening
+String pwdLengthening(String str) {
+  if (PrefService.boolDefault(ca.isPasswordLengthening)) {
+    int threshold =
+        PrefService.doubleDefault(ca.passwordLengthThreshold).toInt();
+    int multiple = (threshold / str.length).ceil();
+    if (multiple > 1) {
+      str = List.filled(multiple, str).join('·');
+    }
+  }
+
+  return str;
 }
 
 ///
@@ -105,7 +121,7 @@ class Encryption {
     if (_secretKey != null) return _secretKey!;
 
     if (_key.isNotEmpty) {
-      final res = await argonHash(key, key);
+      final res = await argonHash(pwdLengthening(_key), _key);
       _secretKey = res.$1;
       _keyHash = res.$2;
     } else {
@@ -119,7 +135,7 @@ class Encryption {
   Future<String> encrypt(String clearText) async {
     // await _initSecretKey();
     final SecretBox secretBox = await _algorithm.encryptString(
-      clearText.trim(),
+      clearText,
       secretKey: await _initSecretKey(),
       // secretKey: _secretKey!,
     );

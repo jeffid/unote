@@ -28,15 +28,19 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m2(tag) =>
       "Do you want to remove the tag ${tag} from this note?";
 
-  static String m3(min, max) => "Please enter ${min} to ${max} characters";
+  static String m3(num) => "Password length threshold:${num} ";
 
-  static String m4(len) => "Please enter ${len} digits";
+  static String m4(min, max) => "Please enter ${min} to ${max} characters";
 
-  static String m5(cd) => "Please try again in ${cd} second(s)";
+  static String m5(len) => "Please enter ${len} digits";
 
-  static String m6(count) => "${count} note(s) selected";
+  static String m6(cd) => "Please try again in ${cd} second(s)";
 
-  static String m7(num) => "${num} minutes";
+  static String m7(count) => "${count} note(s) selected";
+
+  static String m8(num) => "current value:${num} ";
+
+  static String m9(num) => "${num} minutes";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -120,7 +124,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "Favorite_selected":
             MessageLookupByLibrary.simpleMessage("Favorite selected"),
         "GitHub_Repo": MessageLookupByLibrary.simpleMessage("GitHub Repo"),
+        "Keep_password_min_length":
+            MessageLookupByLibrary.simpleMessage("Keep password min length"),
         "Language": MessageLookupByLibrary.simpleMessage("Language"),
+        "Lengthen_the_original_password": MessageLookupByLibrary.simpleMessage(
+            "Lengthen the original password repeatedly to ensure that it is not less than the minimum length"),
         "Light": MessageLookupByLibrary.simpleMessage("Light"),
         "Location": MessageLookupByLibrary.simpleMessage("Location"),
         "Main_Page": MessageLookupByLibrary.simpleMessage("Main Page"),
@@ -138,13 +146,18 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Password cannot be empty"),
         "Password_is_incorrect":
             MessageLookupByLibrary.simpleMessage("Password is incorrect"),
+        "Password_length_threshold": m3,
+        "Password_lengthening":
+            MessageLookupByLibrary.simpleMessage("Password lengthening"),
+        "Password_min_length":
+            MessageLookupByLibrary.simpleMessage("Password min length"),
         "Passwords_do_not_match":
             MessageLookupByLibrary.simpleMessage("Passwords do not match"),
         "Paste": MessageLookupByLibrary.simpleMessage("Paste"),
         "Pin": MessageLookupByLibrary.simpleMessage("Pin"),
         "Pin_selected": MessageLookupByLibrary.simpleMessage("Pin selected"),
-        "Please_enter_characters": m3,
-        "Please_enter_digits": m4,
+        "Please_enter_characters": m4,
+        "Please_enter_digits": m5,
         "Please_enter_passcode":
             MessageLookupByLibrary.simpleMessage("Please enter passcode"),
         "Please_enter_password":
@@ -156,7 +169,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Please_set_the_screen_lock_passcode":
             MessageLookupByLibrary.simpleMessage(
                 "Please set the screen lock passcode"),
-        "Please_try_again_in_cd_second": m5,
+        "Please_try_again_in_cd_second": m6,
         "Preview": MessageLookupByLibrary.simpleMessage("Preview"),
         "Received_text": MessageLookupByLibrary.simpleMessage("Received text"),
         "Recreate": MessageLookupByLibrary.simpleMessage("Recreate"),
@@ -228,9 +241,10 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Use Mode Switcher"),
         "Use_external_storage":
             MessageLookupByLibrary.simpleMessage("Use external storage"),
-        "countSelectedNotes": m6,
+        "countSelectedNotes": m7,
+        "current_value": m8,
         "en": MessageLookupByLibrary.simpleMessage("English"),
-        "minutes": m7,
+        "minutes": m9,
         "set_the_screen_lock_passcode": MessageLookupByLibrary.simpleMessage(
             "Set the screen lock passcode"),
         "zhCn": MessageLookupByLibrary.simpleMessage("中文-简体"),

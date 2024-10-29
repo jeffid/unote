@@ -243,6 +243,26 @@
     "@Only_copy": {},
     "Paste": "Paste",
     "@Paste": {},
+    "Keep_password_min_length": "Keep password min length",
+    "@Keep_password_min_length": {},
+    "Password_lengthening": "Password lengthening",
+    "@Password_lengthening": {},
+    "Lengthen_the_original_password": "Lengthen the original password repeatedly to ensure that it is not less than the minimum length",
+    "@Lengthen_the_original_password": {},
+    "Password_min_length": "Password min length",
+    "@Password_min_length": {},
+    "current_value": "current value:{num} ",
+    "@current_value": {
+        "placeholders": {
+            "num": {}
+        }
+    },
+    "Password_length_threshold": "Password length threshold:{num} ",
+    "@Password_length_threshold": {
+        "placeholders": {
+            "num": {}
+        }
+    },
     "minutes": "{num} minutes",
     "@minutes": {
         "placeholders": {

@@ -26,15 +26,19 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m2(tag) => "确定要从文档中移除标签：${tag}？";
 
-  static String m3(min, max) => "请输入 ${min} 至 ${max} 位的字符";
+  static String m3(num) => "密码长度阈值:${num} ";
 
-  static String m4(len) => "请输入 ${len} 位纯数字字符";
+  static String m4(min, max) => "请输入 ${min} 至 ${max} 位的字符";
 
-  static String m5(cd) => "请在 ${cd} 秒后重试";
+  static String m5(len) => "请输入 ${len} 位纯数字字符";
 
-  static String m6(count) => "${count} 个选中文档";
+  static String m6(cd) => "请在 ${cd} 秒后重试";
 
-  static String m7(num) => "${num} 分钟";
+  static String m7(count) => "${count} 个选中文档";
+
+  static String m8(num) => "当前值：${num} ";
+
+  static String m9(num) => "${num} 分钟";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -100,7 +104,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "Favorite": MessageLookupByLibrary.simpleMessage("收藏"),
         "Favorite_selected": MessageLookupByLibrary.simpleMessage("收藏选中"),
         "GitHub_Repo": MessageLookupByLibrary.simpleMessage("GitHub 仓库"),
+        "Keep_password_min_length":
+            MessageLookupByLibrary.simpleMessage("保持密码最小长度"),
         "Language": MessageLookupByLibrary.simpleMessage("语言"),
+        "Lengthen_the_original_password":
+            MessageLookupByLibrary.simpleMessage("将原密码以重复方式加长保证其不小于最小长度"),
         "Light": MessageLookupByLibrary.simpleMessage("亮色"),
         "Location": MessageLookupByLibrary.simpleMessage("位置"),
         "Main_Page": MessageLookupByLibrary.simpleMessage("主页"),
@@ -116,13 +124,16 @@ class MessageLookup extends MessageLookupByLibrary {
         "Password_cannot_be_empty":
             MessageLookupByLibrary.simpleMessage("密码不能为空"),
         "Password_is_incorrect": MessageLookupByLibrary.simpleMessage("密码不正确"),
+        "Password_length_threshold": m3,
+        "Password_lengthening": MessageLookupByLibrary.simpleMessage("密码加长"),
+        "Password_min_length": MessageLookupByLibrary.simpleMessage("密码最小长度"),
         "Passwords_do_not_match":
             MessageLookupByLibrary.simpleMessage("两次密码不匹配"),
         "Paste": MessageLookupByLibrary.simpleMessage("粘贴"),
         "Pin": MessageLookupByLibrary.simpleMessage("置顶"),
         "Pin_selected": MessageLookupByLibrary.simpleMessage("置顶选中"),
-        "Please_enter_characters": m3,
-        "Please_enter_digits": m4,
+        "Please_enter_characters": m4,
+        "Please_enter_digits": m5,
         "Please_enter_passcode":
             MessageLookupByLibrary.simpleMessage("请输入屏锁密码"),
         "Please_enter_password": MessageLookupByLibrary.simpleMessage("请输入密码"),
@@ -131,7 +142,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("请设置文档加密密码（该密码不可找回！）"),
         "Please_set_the_screen_lock_passcode":
             MessageLookupByLibrary.simpleMessage("请设置屏锁密码"),
-        "Please_try_again_in_cd_second": m5,
+        "Please_try_again_in_cd_second": m6,
         "Preview": MessageLookupByLibrary.simpleMessage("预览"),
         "Received_text": MessageLookupByLibrary.simpleMessage("接收的文本"),
         "Recreate": MessageLookupByLibrary.simpleMessage("重建"),
@@ -189,9 +200,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "Use_Mode_Switcher": MessageLookupByLibrary.simpleMessage("启用显示模式切换开关"),
         "Use_external_storage":
             MessageLookupByLibrary.simpleMessage("使用指定数据文件夹"),
-        "countSelectedNotes": m6,
+        "countSelectedNotes": m7,
+        "current_value": m8,
         "en": MessageLookupByLibrary.simpleMessage("English"),
-        "minutes": m7,
+        "minutes": m9,
         "set_the_screen_lock_passcode":
             MessageLookupByLibrary.simpleMessage("设置屏锁密码"),
         "zhCn": MessageLookupByLibrary.simpleMessage("中文-简体"),

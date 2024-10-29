@@ -1260,6 +1260,66 @@ class S {
     );
   }
 
+  /// `Keep password min length`
+  String get Keep_password_min_length {
+    return Intl.message(
+      'Keep password min length',
+      name: 'Keep_password_min_length',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Password lengthening`
+  String get Password_lengthening {
+    return Intl.message(
+      'Password lengthening',
+      name: 'Password_lengthening',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Lengthen the original password repeatedly to ensure that it is not less than the minimum length`
+  String get Lengthen_the_original_password {
+    return Intl.message(
+      'Lengthen the original password repeatedly to ensure that it is not less than the minimum length',
+      name: 'Lengthen_the_original_password',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Password min length`
+  String get Password_min_length {
+    return Intl.message(
+      'Password min length',
+      name: 'Password_min_length',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `current value:{num} `
+  String current_value(Object num) {
+    return Intl.message(
+      'current value:$num ',
+      name: 'current_value',
+      desc: '',
+      args: [num],
+    );
+  }
+
+  /// `Password length threshold:{num} `
+  String Password_length_threshold(Object num) {
+    return Intl.message(
+      'Password length threshold:$num ',
+      name: 'Password_length_threshold',
+      desc: '',
+      args: [num],
+    );
+  }
+
   /// `{num} minutes`
   String minutes(Object num) {
     return Intl.message(
