@@ -1,0 +1,24 @@
+display_name: PuNote
+generic_name: PuNote
+url: https://github.com/punote/punote
+license: MIT
+
+# packager: PuNote
+# packagerEmail: linux@PuNote.com
+
+icon: ./assets/icon/icon-120.png
+
+keywords:
+  - PuNote
+  - markdown
+  - note
+  - encryption
+
+priority: optional
+section: x11
+installed_size: 6604
+essential: false
+
+group: Applications/Internet
+
+startup_notify: true

@@ -1,0 +1,38 @@
+display_name: PuNote
+generic_name: PuNote
+
+icon: ./assets/icon/icon-120.png
+
+categories:
+  - Tool
+
+keywords:
+  - PuNote
+  - markdown
+  - note
+  - encryption
+
+actions:
+  - name: Start
+    label: start
+    arguments:
+      - --start
+  - name: Stop
+    label: stop
+    arguments:
+      - --stop
+
+startup_notify: true
+
+app_run_file: AppRun
+
+# You can specify the shared libraries that you want to bundle with your app
+#
+# flutter_distributor automatically detects the shared libraries that your app
+# depends on, but you can also specify them manually here.
+#
+# The following example shows how to bundle the libcurl library with your app.
+#
+# include:
+#   - libcurl.so.4
+include: []

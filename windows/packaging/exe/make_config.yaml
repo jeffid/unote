@@ -1,0 +1,13 @@
+app_id: cf969800-c065-42e6-ab08-9e2a940226a9
+publisher: PuNote
+publisher_url: https://github.com/punote/punote
+display_name: PuNote
+executable_name: PuNote.exe
+output_base_file_name: PuNote.exe
+create_desktop_icon: true
+# install_dir_name: "{autopf64}\\PuNote"
+setup_icon_file: ..\..\windows\runner\resources\app_icon.ico
+locales:
+  - en
+  - zh
+script_template: inno_setup.sas

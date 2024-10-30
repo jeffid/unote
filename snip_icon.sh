@@ -11,6 +11,8 @@ DIST_DIR="assets/icon"
 sips -z 1000 1000 $SOURCE -o $DIST_DIR/icon-1000.png
 sips -z 512 512 $SOURCE -o $DIST_DIR/icon-512.png
 sips -z 192 192 $SOURCE -o $DIST_DIR/icon-192.png
+sips -z 120 120 $SOURCE -o $DIST_DIR/icon-120.png
+sips -z 120 120 $SOURCE -o $DIST_DIR/../tutorial/assets/images/icon-120.png
 
 # android
 DIST_DIR="android/app/src/main/res"
