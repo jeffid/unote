@@ -1,5 +1,3 @@
-source 'https://mirrors.tuna.tsinghua.edu.cn/git/CocoaPods/Specs.git'
-
 # Uncomment this line to define a global platform for your project
 # platform :ios, '12.0'
 
@@ -37,6 +35,12 @@ target 'Runner' do
   target 'RunnerTests' do
     inherit! :search_paths
   end
+  # share_handler addition start
+  target 'ShareExtension' do
+    inherit! :search_paths
+    pod "share_handler_ios_models", :path => ".symlinks/plugins/share_handler_ios/ios/Models"
+  end
+  # share_handler addition end
 end
 
 post_install do |installer|
