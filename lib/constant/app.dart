@@ -60,6 +60,9 @@ const String assetsPath = 'assets_path';
 const String isScreenLock = 'is_screen_lock';
 const String screenLockPwd = 'screen_lock_pwd';
 const String screenLockDuration = 'screen_lock_duration';
+
 // other
 const String isDendronMode = 'is_dendron_mode';
 const String debugLogsSync = 'debug_logs_sync';
+const String isPasswordLengthening = 'is_password_lengthening';
+const String passwordLengthThreshold = 'password_length_threshold';

@@ -243,6 +243,26 @@
   "@Only_copy": {},
   "Paste": "粘贴",
   "@Paste": {},
+  "Keep_password_min_length": "保持密码最小长度",
+  "@Keep_password_min_length": {},
+  "Password_lengthening": "密码加长",
+  "@Password_lengthening": {},
+  "Lengthen_the_original_password": "将原密码以重复方式加长保证其不小于最小长度",
+  "@Lengthen_the_original_password": {},
+  "Password_min_length": "密码最小长度",
+  "@Password_min_length": {},
+  "current_value": "当前值：{num} ",
+  "@current_value": {
+    "placeholders": {
+      "num": {}
+    }
+  },
+  "Password_length_threshold": "密码长度阈值:{num} ",
+  "@Password_length_threshold": {
+      "placeholders": {
+          "num": {}
+      }
+  },
   "minutes": "{num} 分钟",
   "@minutes": {
     "placeholders": {
