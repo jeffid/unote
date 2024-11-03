@@ -1,14 +1,15 @@
 display_name: PuNote
 package_name: PuNote
 generic_name: PuNote
-# maintainer:
-#   name: PuNote
-#   email: linux@PuNote.com
+
+maintainer:
+  name: jf
+  # email: jeffid@tuta.io
 
 icon: ./assets/icon/icon-120.png
 
 categories:
-  - Tool
+  - TextEditor
 
 keywords:
   - PuNote

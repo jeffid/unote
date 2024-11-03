@@ -3,8 +3,9 @@ generic_name: PuNote
 
 icon: ./assets/icon/icon-120.png
 
+# https://specifications.freedesktop.org/menu-spec/1.0/category-registry.html
 categories:
-  - Tool
+  - TextEditor
 
 keywords:
   - PuNote
@@ -22,9 +23,9 @@ actions:
     arguments:
       - --stop
 
-startup_notify: true
-
 app_run_file: AppRun
+
+startup_notify: true
 
 # You can specify the shared libraries that you want to bundle with your app
 #
