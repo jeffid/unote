@@ -1,45 +1,42 @@
-// allprojects {
-//     repositories {
-//         maven { url 'https://maven.aliyun.com/repository/public/' }
-//         maven { url 'https://maven.aliyun.com/repository/spring/'}
-//         maven { url 'https://maven.aliyun.com/repository/google/'}
-//         maven { url 'https://maven.aliyun.com/repository/gradle-plugin/'}
-//         maven { url 'https://maven.aliyun.com/repository/spring-plugin/'}
-//         maven { url 'https://maven.aliyun.com/repository/grails-core/'}
-//         maven { url 'https://maven.aliyun.com/repository/apache-snapshots/'}
-//         maven { url 'https://maven.aliyun.com/repository/jcenter' }
-//         maven { url 'https://maven.aliyun.com/repository/central/' }
+allprojects {
+    repositories {
+        // maven { url 'https://maven.aliyun.com/repository/public/' } //
+        // maven { url 'https://maven.aliyun.com/repository/spring/' }
+        // maven { url 'https://maven.aliyun.com/repository/google/' }
+        // maven { url 'https://maven.aliyun.com/repository/gradle-plugin/' } //
+        // maven { url 'https://maven.aliyun.com/repository/spring-plugin/' }
+        // maven { url 'https://maven.aliyun.com/repository/grails-core/' }
+        // maven { url 'https://maven.aliyun.com/repository/apache-snapshots/' } //
+        // maven { url 'https://maven.aliyun.com/repository/central/' } //
+        // maven { url 'https://maven.aliyun.com/repository/jcenter/' }
 
-//         // mavenLocal()
-//         google()
-//         mavenCentral()
-//     }
-// }
+        google()
+        mavenCentral()
+    }
+}
 
 // buildscript {
-//     ext.kotlin_version = '1.7.10'
-//     // ext.kotlin_version =  '1.9.23'
-//     repositories {
-//         maven { url 'https://maven.aliyun.com/repository/public/' } //
-//         maven { url 'https://maven.aliyun.com/repository/spring/'}
-//         maven { url 'https://maven.aliyun.com/repository/google/'}
-//         maven { url 'https://maven.aliyun.com/repository/gradle-plugin/'} //
-//         maven { url 'https://maven.aliyun.com/repository/spring-plugin/'}
-//         maven { url 'https://maven.aliyun.com/repository/grails-core/'}
-//         maven { url 'https://maven.aliyun.com/repository/apache-snapshots/'} //
-//         maven { url 'https://maven.aliyun.com/repository/central/' } //
-//         maven { url 'https://maven.aliyun.com/repository/jcenter/' }
+//     ext.kotlin_version = '1.7.10' // <= kotlin expected version
 
-//         // mavenLocal()
+//     repositories {
+//         // maven { url 'https://maven.aliyun.com/repository/public/' } //
+//         // maven { url 'https://maven.aliyun.com/repository/spring/' }
+//         // maven { url 'https://maven.aliyun.com/repository/google/' }
+//         // maven { url 'https://maven.aliyun.com/repository/gradle-plugin/' } //
+//         // maven { url 'https://maven.aliyun.com/repository/spring-plugin/' }
+//         // maven { url 'https://maven.aliyun.com/repository/grails-core/' }
+//         // maven { url 'https://maven.aliyun.com/repository/apache-snapshots/' } //
+//         // maven { url 'https://maven.aliyun.com/repository/central/' } //
+//         // maven { url 'https://maven.aliyun.com/repository/jcenter/' }
+
 //         google()
-//         // jcenter()
 //         mavenCentral()
 //     }
 
 //     dependencies {
-//         classpath 'com.android.tools.build:gradle:7.6.4'
-//         // classpath 'com.android.tools.build:gradle:8.9'
-//         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+//         // gradle plugin version list @see: https://maven.google.com/web/index.html?q=com.android.tools.build#com.android.tools.build:gradle
+//         classpath 'com.android.tools.build:gradle:7.4.2' // <= gradle plugin version
+//         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version" // <= kotlin expected version use here
 //     }
 // }
 
