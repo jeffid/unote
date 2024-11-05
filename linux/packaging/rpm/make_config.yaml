@@ -3,10 +3,12 @@ generic_name: PuNote
 url: https://github.com/punote/punote
 license: MIT
 
-# packager: PuNote
+# packager: jf
 # packagerEmail: linux@PuNote.com
 
 icon: ./assets/icon/icon-120.png
+
+group: Applications/TextEditor
 
 keywords:
   - PuNote
@@ -18,7 +20,5 @@ priority: optional
 section: x11
 installed_size: 6604
 essential: false
-
-group: Applications/Internet
 
 startup_notify: true

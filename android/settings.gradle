@@ -18,7 +18,9 @@ pluginManagement {
 
 plugins {
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
-    id "com.android.application" version "7.3.0" apply false
+    // gradle plugin version list @see: https://maven.google.com/web/index.html?q=com.android.tools.build#com.android.tools.build:gradle
+    // gradle version reference @see: https://developer.android.com/build/releases/gradle-plugin?hl=zh-cn#updating-gradle
+    id "com.android.application" version "7.4.2" apply false // gradle plugin 7.4 <=> gradle 7.6
     id "org.jetbrains.kotlin.android" version "1.7.10" apply false
 }
 
