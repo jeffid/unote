@@ -15,30 +15,30 @@ allprojects {
     }
 }
 
-// buildscript {
-//     ext.kotlin_version = '1.7.10' // <= kotlin expected version
+buildscript {
+    ext.kotlin_version = '1.7.10' // <= kotlin expected version
 
-//     repositories {
-//         // maven { url 'https://maven.aliyun.com/repository/public/' } //
-//         // maven { url 'https://maven.aliyun.com/repository/spring/' }
-//         // maven { url 'https://maven.aliyun.com/repository/google/' }
-//         // maven { url 'https://maven.aliyun.com/repository/gradle-plugin/' } //
-//         // maven { url 'https://maven.aliyun.com/repository/spring-plugin/' }
-//         // maven { url 'https://maven.aliyun.com/repository/grails-core/' }
-//         // maven { url 'https://maven.aliyun.com/repository/apache-snapshots/' } //
-//         // maven { url 'https://maven.aliyun.com/repository/central/' } //
-//         // maven { url 'https://maven.aliyun.com/repository/jcenter/' }
+    repositories {
+        // maven { url 'https://maven.aliyun.com/repository/public/' } //
+        // maven { url 'https://maven.aliyun.com/repository/spring/' }
+        // maven { url 'https://maven.aliyun.com/repository/google/' }
+        // maven { url 'https://maven.aliyun.com/repository/gradle-plugin/' } //
+        // maven { url 'https://maven.aliyun.com/repository/spring-plugin/' }
+        // maven { url 'https://maven.aliyun.com/repository/grails-core/' }
+        // maven { url 'https://maven.aliyun.com/repository/apache-snapshots/' } //
+        // maven { url 'https://maven.aliyun.com/repository/central/' } //
+        // maven { url 'https://maven.aliyun.com/repository/jcenter/' }
 
-//         google()
-//         mavenCentral()
-//     }
+        google()
+        mavenCentral()
+    }
 
-//     dependencies {
-//         // gradle plugin version list @see: https://maven.google.com/web/index.html?q=com.android.tools.build#com.android.tools.build:gradle
-//         classpath 'com.android.tools.build:gradle:7.4.2' // <= gradle plugin version
-//         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version" // <= kotlin expected version use here
-//     }
-// }
+    dependencies {
+        // gradle plugin version list @see: https://maven.google.com/web/index.html?q=com.android.tools.build#com.android.tools.build:gradle
+        classpath 'com.android.tools.build:gradle:7.4.2' // <= gradle plugin version
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version" // <= kotlin expected version use here
+    }
+}
 
 rootProject.buildDir = "../build"
 
