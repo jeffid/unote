@@ -75,6 +75,7 @@ jobs:
       
       - name: Build Android app
         if: startsWith(matrix.platform,'android')
+        continue-on-error: true
         run: |
           flutter_distributor package --platform ${{ matrix.platform }} --targets ${{ matrix.targets }}
 
