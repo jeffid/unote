@@ -1,4 +1,4 @@
-name: PuNote CI
+name: PuNote Release
 
 on:
   push:
@@ -41,15 +41,12 @@ jobs:
           # - platform: ios
           #   os: macos-latest
           #   aarch: universal
-          #   filename: punote-ios
           #   targets: ipa
 
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
-      - run: node -v
 
       - name: Setup Flutter
         uses: kuhnroyal/flutter-fvm-config-action/config@v3
@@ -70,7 +67,7 @@ jobs:
         if: startsWith(matrix.platform,'android')
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: 17
       
       - name: Build Android app
@@ -82,6 +79,7 @@ jobs:
       - name: Build MacOS app
         if: startsWith(matrix.platform,'macos')
         run: |
+          node -v
           npm install -g appdmg
           flutter_distributor package --platform ${{ matrix.platform }} --targets ${{ matrix.targets }}
 
@@ -123,6 +121,8 @@ jobs:
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Download app from artifact
         uses: actions/download-artifact@v4
         with:
@@ -131,6 +131,20 @@ jobs:
         run: |
           pwd
           ls -R
+      - name: Prepare release message
+        run: |
+          # Get pubspec.yaml version value
+          sudo snap install yq
+          VERSION=$(yq eval '.version' 'pubspec.yaml')
+          echo "Version: $VERSION"
+
+          pip install gitchangelog pystache mustache markdown
+          TAG="${{ github.ref_name }}"
+          sed -e "s|RELEASE_TAG|${TAG}|g" -e "s|VERSION|${VERSION}|g" ./.github/release_message.html > release.html
+          echo -e "\n\n<details open markdown=1> <summary>All changes from $TAG to the latest commit:</summary>\n\n" >> release.html
+          gitchangelog >> release.html  2>&1 || echo "Error in gitchangelog"
+          echo -e "\n\n</details>" >> release.html
+
       - name: Release app
         uses: ncipollo/release-action@v1
         with:
