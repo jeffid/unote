@@ -3,4 +3,4 @@
 # Change the version number before submitting: 
 VERSION=$(yq eval '.version' 'pubspec.yaml')
 echo "Version: $VERSION"
-git tag ${VERSION} && git push --tags
+git tag "v${VERSION}" && git push --tags
